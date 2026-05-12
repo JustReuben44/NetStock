@@ -1,12 +1,10 @@
-function Title(){
-  return <h1> NETSTOCK: User</h1>
-}
-
 export default function Home() {
-  const name = "Reuben";
   return(
-      <div>
-        <Title/>
-      </div>
-  )
+    <div>
+       <header>
+          <h1> <span className ="brand"> //</span> Netcalibre </h1>
+        </header>
+    </div>
+
+  );
 }
