@@ -3,7 +3,7 @@
   src: url('../ITC Eras Std Bold.otf') format('opentype');
 }
 
-html{
+body{
   background-color: #010f29;
   color: #FFFFFF;
 }

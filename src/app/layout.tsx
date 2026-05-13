@@ -5,8 +5,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+
     <html>
-    {children}
+      <head>
+        <title>Netstock</title>
+      </head>
+
+    <body>
+      <header>
+         <h1> <span className ="brand"> //</span> Netstock</h1>
+      </header>
+      {children}
+    </body>
     </html>
   );
 }

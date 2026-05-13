@@ -1,10 +1,74 @@
-export default function Home() {
-  return(
-    <div>
-       <header>
-          <h1> <span className ="brand"> //</span> Netcalibre </h1>
-        </header>
-    </div>
+"use client";
+import { supabase } from "@/lib/supabase-client";
+import { useEffect, useState } from "react";
 
-  );
+export default function SearchItems() {
+  const [searchTerm, setSearchTerm] = useState({input: ""});
+  const [items, setItems] = useState<any[]>([]);
+
+  const retrieveItems = async() => {
+    const { data, error } = await supabase.from("item").select("*");
+    if (error) {
+      console.error("Error retrieving items:", error);
+      return;
+    }
+    setItems(data);
+  };
+
+  {/*Handle input change */}
+
+  const handleSubmit = async(e: any) => {
+    e.preventDefault();
+    const { data, error } = await supabase
+  .from("item")
+  .select("*")
+  .or(`itemname.ilike.%${searchTerm.input}%,itemtype.ilike.%${searchTerm.input}%,locationid.ilike.%${searchTerm.input}%`);
+;
+
+    if (error) {
+      console.log("Error searching items:", error);
+      return;
+    }
+    setItems(data);
+  };
+
+  useEffect(() => {
+    retrieveItems();
+  }, []);
+
+  console.log(items);
+
+  return(
+    <main>
+      <div style = {{maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial"}}>
+        <h2 style = {{textAlign: "center"}}><em>Search Stock</em></h2>
+
+        <form onSubmit={handleSubmit} style = {{display: "flex", justifyContent: "center", marginBottom: "2rem"}}>
+          <input 
+          type="text" placeholder="e.g fibre cables" 
+          style = {{padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid #ccc"}} 
+          
+          value={searchTerm.input}
+          onChange={(e) => setSearchTerm({...searchTerm, input: e.target.value})}
+          />
+        </form>
+      </div>
+
+      <ul style = {{maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial"}}>
+        {items.map((item, key) => (
+          <li 
+          key={key} style = {{borderBottom: "1px solid #ccc", padding: "1rem 0"}}
+          >
+      
+          <div style = {{display: "flex", justifyContent: "space-between"}}>
+            <h4 style = {{margin: "0 0 0.5rem 0"}}>{item.itemname}</h4>
+            <div style = {{display: "flex", gap: "1rem"}}>
+              <p style = {{margin: "0", color: "#555"}}>Category: {item.itemtype}</p>
+              <p style = {{margin: "0", color: "#555"}}>Location: {item.locationid}</p>
+            </div>
+          </div>
+          </li>
+        ))}
+      </ul>
+    </main>  );
 }
