@@ -63,12 +63,13 @@ export default function SearchItems() {
           <div style = {{display: "flex", justifyContent: "space-between"}}>
             <h4 style = {{margin: "0 0 0.5rem 0"}}>{item.itemname}</h4>
             <div style = {{display: "flex", gap: "1rem"}}>
-              <p style = {{margin: "0", color: "#555"}}>Category: {item.itemtype}</p>
-              <p style = {{margin: "0", color: "#555"}}>Location: {item.locationid}</p>
+              <p style = {{color: "#555"}}>{item.itemtype}</p>
+              <p style = {{color: "#555"}}>{item.locationid}</p>
             </div>
           </div>
           </li>
         ))}
       </ul>
+      
     </main>  );
 }
