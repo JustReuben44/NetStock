@@ -55,15 +55,6 @@ export default function SearchItems() {
           onChange={(e) => setSearchTerm({...searchTerm, input: e.target.value})}
           />
         </form>
-
-        <button id="myBtn">Open Modal</button>
-          <div id="myModal" className="modal">
-            <div className="modal-content">
-              <span className="close">&times;</span>
-              <p>Some text in the Modal..</p>
-            </div>
-
-          </div>
       </div>
 
       <ul style = {{maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none"}}>
