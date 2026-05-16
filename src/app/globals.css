@@ -6,12 +6,16 @@
 body{
   background-color: #010f29;
   color: #FFFFFF;
+  margin: 0;
 }
 
 header{
   font-family: 'Brand';
   text-align: left;
-  margin-left: 1rem;
+  background-color: #0a0f1e;
+  padding: 0.5rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
 .brand{

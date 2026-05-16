@@ -55,7 +55,7 @@ export default function SearchItems() {
         </form>
       </div>
 
-      <ul style = {{maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial"}}>
+      <ul style = {{maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none"}}>
         {items.map((item, key) => (
           <li 
           key={key} style = {{borderBottom: "1px solid #ccc", padding: "1rem 0"}}
