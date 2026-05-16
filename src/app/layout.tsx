@@ -7,13 +7,13 @@ export default function RootLayout({
   return (
     
     <html>
-      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  
       <head>
         <title>Netstock</title>
       </head>
 
     <body>
-      <header style = {{paddingTop: "env(safe-area-inset-top)"}}>
+      <header>
         <div style = {{display: "flex", alignItems: "center", gap: "0.5rem", justifyContent: "space-between"}}>
          <h1> <span className ="brand"> // </span> Netstock</h1>
          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width ="28" height="28">

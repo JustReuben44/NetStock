@@ -1,7 +1,8 @@
 "use client";
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase-client";
 import { useEffect, useState } from "react";
 import "./page.css";
+const supabase = createClient();
 
 export default function SearchItems() {
   const [searchTerm, setSearchTerm] = useState({input: ""});
