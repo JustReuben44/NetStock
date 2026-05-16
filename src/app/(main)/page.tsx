@@ -57,6 +57,8 @@ export default function SearchItems() {
         </form>
       </div>
 
+      <p style = {{textAlign: "center", fontStyle: "italic", fontFamily: "Arial"}}>Showing {items.length} results</p>
+      
       <ul style = {{maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none"}}>
         {items.map((item, key) => (
           <li 
