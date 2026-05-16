@@ -1,6 +1,7 @@
 "use client";
 import { supabase } from "@/lib/supabase-client";
 import { useEffect, useState } from "react";
+import "./page.css";
 
 export default function SearchItems() {
   const [searchTerm, setSearchTerm] = useState({input: ""});
@@ -63,13 +64,13 @@ export default function SearchItems() {
           <div style = {{display: "flex", justifyContent: "space-between"}}>
             <h4 style = {{margin: "0 0 0.5rem 0"}}>{item.itemname}</h4>
             <div style = {{display: "flex", gap: "1rem"}}>
-              <p style = {{color: "#555"}}>{item.itemtype}</p>
-              <p style = {{color: "#555"}}>{item.locationid}</p>
+              <button className = "itemButton">View</button>
+              <button className = "itemButton">Add</button>
             </div>
           </div>
           </li>
         ))}
       </ul>
-      
+
     </main>  );
 }

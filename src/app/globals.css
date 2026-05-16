@@ -11,6 +11,7 @@ body{
 header{
   font-family: 'Brand';
   text-align: left;
+  margin-left: 1rem;
 }
 
 .brand{
