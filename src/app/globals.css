@@ -3,10 +3,6 @@
   src: url('../ITC Eras Std Bold.otf') format('opentype');
 }
 
-html{
-  background-color: #0a0f1e;
-}
-
 body{
   background-color: #010f29;
   color: #FFFFFF;
@@ -18,6 +14,7 @@ header{
   text-align: left;
   background-color: #0a0f1e;
   padding: 0.5rem;
+  padding-top: env(safe-area-inset-top);
   padding-left: 1.5rem;
   padding-right: 1.5rem;
 }
