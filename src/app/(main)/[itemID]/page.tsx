@@ -10,7 +10,7 @@ export default async function ItemDetails({ params }: { params: { itemID: string
         console.error("Error retrieving item details:", error);
         return null;
     }return (
-    <main style={{ maxWidth: "600px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "1200px",margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
         <div style={{ justifyContent: "space-between", display: "flex", alignItems: "center", marginBottom: "1rem" }}>
                 <Link href="/" style={{ color: "white" }}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
@@ -31,7 +31,7 @@ export default async function ItemDetails({ params }: { params: { itemID: string
             <h2 style={{ textAlign: "center" }}><em>{data.itemname}</em></h2>
 
 
-        <div style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9" , color: "#333"}}>
+        <div style={{ maxWidth: "600px", margin: "0 auto", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9" , color: "#333"}}>
             <p><strong>Description:</strong> {data.description}</p>
             <p><strong>Type:</strong> {data.itemtype}</p>
             <p><strong>Location:</strong> {data.locationid}</p>
