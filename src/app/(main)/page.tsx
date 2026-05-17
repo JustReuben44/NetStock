@@ -39,7 +39,6 @@ export default function SearchItems() {
     retrieveItems();
   }, []);
 
-  console.log(items);
 
   return(
     <main>
@@ -68,7 +67,9 @@ export default function SearchItems() {
           <div style = {{display: "flex", justifyContent: "space-between"}}>
             <h4 style = {{margin: "0 0 0.5rem 0"}}>{item.itemname}</h4>
             <div style = {{display: "flex", gap: "1rem"}}>
-              <button className = "itemButton">View</button>
+              <a href = {`/${item.itemid}`} target="_blank" rel="noopener noreferrer">
+                <button className = "itemButton">View</button>
+              </a>
               <button className = "itemButton">Add</button>
             </div>
           </div>
