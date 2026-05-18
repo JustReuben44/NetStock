@@ -10,7 +10,7 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'azure',
         options: {
-            redirectTo: `${window.location.origin}/search`
+            redirectTo: `${window.location.origin}/auth/callback`
         }
     });
     if (error) {
