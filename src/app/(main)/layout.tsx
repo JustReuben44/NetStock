@@ -1,3 +1,4 @@
+"use client";
 import '../globals.css'
 
 export default function MainLayout({
@@ -29,7 +30,11 @@ export default function MainLayout({
           </div>
         </div>
       </header>
-      {children}
+      
+    
+  <main>{children}</main>
+
+
     </>
   );
 }
