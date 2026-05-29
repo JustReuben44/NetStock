@@ -3,6 +3,11 @@
   src: url('../ITC Eras Std Bold.otf') format('opentype');
 }
 
+a {
+  text-decoration: none;
+  color: white;
+}
+
 body{
   background-color: #000814;
   color: #FFFFFF;
@@ -30,4 +35,15 @@ header{
   flex-direction: column;
   justify-content: space-between;
   padding: 1rem;
+}
+
+.menu{
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.menu:hover{
+  color:rgb(248, 68, 128);
 }
