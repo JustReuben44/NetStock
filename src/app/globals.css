@@ -47,3 +47,7 @@ header{
 .menu:hover{
   color:rgb(248, 68, 128);
 }
+
+.highlight:hover{
+  color:rgb(248, 68, 128);
+}
