@@ -24,17 +24,27 @@ header{
   padding-right: 1.5rem;
 }
 
+header h1{
+  font-size: 1.5rem;
+}
+
+
 .brand{
   color: rgb(248, 68, 128);
 }
 
 .sidebar{
-  width: 260px;
+  width: 220px;
   background-color: #010f29; 
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 1rem;
+  padding: 0 1.5rem 1.5rem 1.5rem 0;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left:0;
+  align-self: flex-start;
+  height: 100vh;
 }
 
 .menu{
@@ -51,3 +61,18 @@ header{
 .highlight:hover{
   color:rgb(248, 68, 128);
 }
+
+.sidebar h1{
+  font-family: 'Brand';
+  color: white;
+  font-size: 0.5rem;
+}
+
+.sidebar a {
+  padding: 6px 8px 6px 16px;
+  text-decoration: none;
+  font-size: 25px;
+  color: white;
+  display: block;
+}
+
