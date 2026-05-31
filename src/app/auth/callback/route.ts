@@ -22,7 +22,25 @@ export async function GET(request: Request) {
         },
       }
     );
+
     await supabase.auth.exchangeCodeForSession(code);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user?.email) {
+      return NextResponse.redirect(new URL("/login?error=unauthorized", request.url));
+    }
+
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", user.email)
+      .single();
+
+    if (!existingUser) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/login?error=unauthorized", request.url));
+    }
   }
 
   return NextResponse.redirect(new URL("/", request.url));
