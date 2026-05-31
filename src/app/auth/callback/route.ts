@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -31,9 +32,14 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL("/login?error=unauthorized", request.url));
     }
 
-    const { data: existingUser } = await supabase
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: existingUser } = await adminClient
       .from("users")
-      .select("id")
+      .select("email_address")
       .eq("email_address", user.email)
       .single();
 
