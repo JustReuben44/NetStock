@@ -10,3 +10,11 @@
 .itemButton:hover{
     background-color: rgb(248, 68, 128);
 }
+
+.itemButton--added{
+    background-color: #444;
+}
+
+.itemButton--added:hover{
+    background-color: rgb(248, 68, 128);
+}
