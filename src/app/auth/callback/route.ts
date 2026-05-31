@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const { data: existingUser } = await supabase
       .from("users")
       .select("id")
-      .eq("email", user.email)
+      .eq("email_address", user.email)
       .single();
 
     if (!existingUser) {
