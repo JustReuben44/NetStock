@@ -7,22 +7,32 @@ const supabase = createClient();
 
 export default function Basket() {
   const [basketItems, setBasketItems] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBasket = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      setUserId(user.id);
 
-      const { data } = await supabase
+      const { data: basketRows, error: basketError } = await supabase
         .from("basket")
-        .select("id, item_id, item(itemname, itemtype, locationid)")
+        .select("id, item_id")
         .eq("user_id", user.id)
         .order("added_at", { ascending: false });
 
-      if (data) setBasketItems(data);
+      if (basketError) { console.error("Basket error:", basketError); setLoading(false); return; }
+      if (!basketRows || basketRows.length === 0) { setLoading(false); return; }
+
+      const itemIds = basketRows.map((r) => r.item_id);
+      const { data: itemRows, error: itemError } = await supabase
+        .from("item")
+        .select("itemid, itemname, itemtype, locationid")
+        .in("itemid", itemIds);
+
+      if (itemError) { console.error("Item error:", itemError); setLoading(false); return; }
+
+      const itemMap = Object.fromEntries((itemRows ?? []).map((i) => [i.itemid, i]));
+      setBasketItems(basketRows.map((row) => ({ ...row, item: itemMap[row.item_id] })));
       setLoading(false);
     };
     fetchBasket();
@@ -48,7 +58,9 @@ export default function Basket() {
         <p style={{ textAlign: "center", fontStyle: "italic", marginTop: "2rem" }}>Your basket is empty.</p>
       ) : (
         <>
-          <p style={{ textAlign: "center", fontStyle: "italic" }}>{basketItems.length} item{basketItems.length !== 1 ? "s" : ""} in your basket</p>
+          <p style={{ textAlign: "center", fontStyle: "italic" }}>
+            {basketItems.length} item{basketItems.length !== 1 ? "s" : ""} in your basket
+          </p>
           <ul style={{ listStyle: "none", padding: "1rem" }}>
             {basketItems.map((row) => (
               <li key={row.id} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
