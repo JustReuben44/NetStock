@@ -14,16 +14,15 @@ export default function SearchItems() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
 
-      const [{ data: itemData }, { data: basketData }] = await Promise.all([
-        supabase.from("item").select("*"),
-        supabase.from("basket").select("item_id").eq("user_id", user.id),
-      ]);
-
+      const { data: itemData } = await supabase.from("item").select("*");
       if (itemData) setItems(itemData);
-      if (basketData) setBasketItemIds(new Set(basketData.map((r) => r.item_id)));
+
+      if (user) {
+        setUserId(user.id);
+        const { data: basketData } = await supabase.from("basket").select("item_id").eq("user_id", user.id);
+        if (basketData) setBasketItemIds(new Set(basketData.map((r) => r.item_id)));
+      }
     };
     init();
   }, []);
@@ -73,12 +72,12 @@ export default function SearchItems() {
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <h4 style={{ margin: "0 0 0.5rem 0" }}>{item.itemname}</h4>
               <div style={{ display: "flex", gap: "1rem" }}>
-                <a href={`/${item.itemid}`} target="_blank" rel="noopener noreferrer">
+                <a href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer">
                   <button className="itemButton">View</button>
                 </a>
                 <button
-                  className={basketItemIds.has(item.itemid) ? "itemButton itemButton--added" : "itemButton"}
-                  onClick={() => toggleBasket(item.itemid)}
+                  className={basketItemIds.has(item.item_id) ? "itemButton itemButton--added" : "itemButton"}
+                  onClick={() => toggleBasket(item.item_id)}
                 >
                   {basketItemIds.has(item.itemid) ? "Remove" : "Add"}
                 </button>

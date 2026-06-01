@@ -16,23 +16,6 @@ export default function MainLayout({
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return;
-
-      const { data } = await supabase
-        .from('users')
-        .select('is_admin')
-        .eq('email_address', user.email)
-        .single();
-
-      setIsAdmin(data?.is_admin === true);
-    };
-    checkAdmin();
-  }, []);
-
   return (
     <>
       <header>
@@ -105,7 +88,6 @@ export default function MainLayout({
         My Borrowed Items
       </a>
     </li>
-    {isAdmin && (
     <li className="list">
       <a className="nav-link" href="#">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20" className="icon">
@@ -115,7 +97,6 @@ export default function MainLayout({
         Admin
       </a>
     </li>
-    )}
   </ul>
   </div>
 

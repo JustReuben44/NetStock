@@ -26,12 +26,12 @@ export default function Basket() {
       const itemIds = basketRows.map((r) => r.item_id);
       const { data: itemRows, error: itemError } = await supabase
         .from("item")
-        .select("itemid, itemname, itemtype, locationid")
-        .in("itemid", itemIds);
+        .select("item_id, itemname, itemtype, locationid")
+        .in("item_id", itemIds);
 
       if (itemError) { console.error("Item error:", itemError); setLoading(false); return; }
 
-      const itemMap = Object.fromEntries((itemRows ?? []).map((i) => [i.itemid, i]));
+      const itemMap = Object.fromEntries((itemRows ?? []).map((i) => [i.item_id, i]));
       setBasketItems(basketRows.map((row) => ({ ...row, item: itemMap[row.item_id] })));
       setLoading(false);
     };

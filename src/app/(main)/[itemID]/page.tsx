@@ -1,15 +1,16 @@
-import '../../globals.css'; 
+import '../../globals.css';
 import { createClient } from "@/lib/supabase-server";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 
 export default async function ItemDetails({ params }: { params: { itemID: string } }) {
     const supabase = await createClient();
     const { itemID } = await params
-    const { data, error } = await supabase.from("item").select("*").eq("itemid", itemID).single();
-    if (error) {
-        console.error("Error retrieving item details:", error);
-        return null;
-    }return (
+    const { data, error } = await supabase.from("item").select("*").eq("item_id", itemID).single();
+    if (error || !data) {
+        notFound();
+    }
+    return (
     <main style={{ maxWidth: "1200px",margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
         <div style={{ justifyContent: "space-between", display: "flex", alignItems: "center", marginBottom: "1rem" }}>
                 <Link href="/" style={{ color: "white" }}>
