@@ -5,24 +5,55 @@ import "./page.css";
 
 const supabase = createClient();
 
+async function getOrCreateBasket(email: string): Promise<string | null> {
+  const { data: existing, error: fetchError } = await supabase
+    .from("basket")
+    .select("basket_id")
+    .eq("email_address", email)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (existing) return existing.basket_id;
+  if (fetchError) console.log("[basket] fetch error:", fetchError.message);
+
+  const { data: created, error: createError } = await supabase
+    .from("basket")
+    .insert({ email_address: email })
+    .select("basket_id")
+    .single();
+
+  if (createError) console.log("[basket] create error:", createError.message);
+  return created?.basket_id ?? null;
+}
+
 export default function SearchItems() {
   const [searchTerm, setSearchTerm] = useState({ input: "" });
   const [items, setItems] = useState<any[]>([]);
   const [basketItemIds, setBasketItemIds] = useState<Set<string>>(new Set());
-  const [userId, setUserId] = useState<string | null>(null);
+  const [basketId, setBasketId] = useState<string | null>(null);
+  const [errorItemId, setErrorItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
+      if (!user?.email) return;
 
-      const [{ data: itemData }, { data: basketData }] = await Promise.all([
+      const [{ data: itemData }, bid] = await Promise.all([
         supabase.from("item").select("*"),
-        supabase.from("basket").select("item_id").eq("user_id", user.id),
+        getOrCreateBasket(user.email),
       ]);
 
       if (itemData) setItems(itemData);
+      console.log("[basket] basketId from getOrCreate:", bid);
+      if (!bid) return;
+
+      setBasketId(bid);
+
+      const { data: basketData } = await supabase
+        .from("basket_item")
+        .select("item_id")
+        .eq("basket_id", bid);
+
       if (basketData) setBasketItemIds(new Set(basketData.map((r) => r.item_id)));
     };
     init();
@@ -37,13 +68,22 @@ export default function SearchItems() {
     if (!error && data) setItems(data);
   };
 
-  const toggleBasket = async (itemId: string) => {
-    if (!userId) return;
+  const addToBasket = async (itemId: string) => {
+    console.log("[basket] addToBasket called, basketId:", basketId, "itemId:", itemId);
+    if (!basketId) { console.log("[basket] no basketId, aborting"); return; }
+
     if (basketItemIds.has(itemId)) {
-      await supabase.from("basket").delete().eq("user_id", userId).eq("item_id", itemId);
-      setBasketItemIds((prev) => { const next = new Set(prev); next.delete(itemId); return next; });
-    } else {
-      await supabase.from("basket").insert({ user_id: userId, item_id: itemId });
+      setErrorItemId(itemId);
+      setTimeout(() => setErrorItemId(null), 3000);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("basket_item")
+      .insert({ basket_id: basketId, item_id: itemId, quantity: 1 });
+
+    console.log("[basket] insert result error:", error?.message ?? "none");
+    if (!error) {
       setBasketItemIds((prev) => new Set(prev).add(itemId));
     }
   };
@@ -70,18 +110,25 @@ export default function SearchItems() {
       <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none" }}>
         {items.map((item, key) => (
           <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <h4 style={{ margin: "0 0 0.5rem 0" }}>{item.itemname}</h4>
-              <div style={{ display: "flex", gap: "1rem" }}>
-                <a href={`/${item.itemid}`} target="_blank" rel="noopener noreferrer">
-                  <button className="itemButton">View</button>
-                </a>
-                <button
-                  className={basketItemIds.has(item.itemid) ? "itemButton itemButton--added" : "itemButton"}
-                  onClick={() => toggleBasket(item.itemid)}
-                >
-                  {basketItemIds.has(item.itemid) ? "Remove" : "Add"}
-                </button>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  {item.itemtype !== "Misc" && (
+                  <button
+                    className={basketItemIds.has(item.item_id) ? "itemButton itemButton--added" : "itemButton"}
+                    onClick={() => addToBasket(item.item_id)}
+                  >
+                    {basketItemIds.has(item.item_id) ? "Added" : "Add"}
+                  </button>
+                  )}
+                  <a href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer">
+                    <button className="itemButton">View</button>
+                  </a>
+                </div>
+                {errorItemId === item.itemid && (
+                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#c0392b" }}>Already in basket</p>
+                )}
               </div>
             </div>
           </li>

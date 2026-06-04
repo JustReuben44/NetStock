@@ -5,7 +5,7 @@ import Link from "next/link";
 export default async function ItemDetails({ params }: { params: { itemID: string } }) {
     const supabase = await createClient();
     const { itemID } = await params
-    const { data, error } = await supabase.from("item").select("*").eq("itemid", itemID).single();
+    const { data, error } = await supabase.from("item").select("*").eq("item_id", itemID).single();
     if (error) {
         console.error("Error retrieving item details:", error);
         return null;
