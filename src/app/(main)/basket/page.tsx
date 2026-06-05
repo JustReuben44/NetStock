@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase-client";
 import { useEffect, useState } from "react";
 import "../page.css";
 
+export const dynamic = "force-dynamic";
+
 export default function Basket() {
   const supabase = createClient();
   const [basketItems, setBasketItems] = useState<any[]>([]);
