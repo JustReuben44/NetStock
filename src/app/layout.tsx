@@ -1,4 +1,12 @@
 import './globals.css'
+ export const metadata = {
+  title: "Netstock",
+  description: "Inventory management for Netcalibre",
+}
+
+export const viewport = {
+  themeColor: "#010f29",
+}
 
 export default function RootLayout({
   children,
@@ -8,7 +16,6 @@ export default function RootLayout({
   return (
     <html>
       <head>
-        <title>Netstock</title>
       </head>
       <body>
         {children}
