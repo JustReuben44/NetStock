@@ -5,13 +5,12 @@ import { Suspense } from "react";
 import "./page.css";
 import "../globals.css";
 
-const supabase = createClient();
-
 function LoginContent() {
   const searchParams = useSearchParams();
   const isUnauthorized = searchParams.get("error") === "unauthorized";
 
   const handleLogin = async () => {
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'azure',
       options: {
