@@ -3,9 +3,8 @@ import { createClient } from "@/lib/supabase-client";
 import { useEffect, useState } from "react";
 import "../page.css";
 
-const supabase = createClient();
-
 export default function Basket() {
+  const supabase = createClient();
   const [basketItems, setBasketItems] = useState<any[]>([]);
   const [basketId, setBasketId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
