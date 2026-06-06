@@ -130,7 +130,7 @@ export default function ScanQrCode() {
                 <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "0.5rem", fontFamily: "Arial", listStyle: "none" }}>
         {items.map((item, key) => (
           <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap:"0.25rem"}}>
               <h4 style={{ margin: "0 0 0.5rem 0" }}>{item.item_name}</h4>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
                 <div style={{ display: "flex", gap: "1rem" }}>
