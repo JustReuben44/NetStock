@@ -1,0 +1,20 @@
+.itemButton{
+    padding: 0.25rem 0.75rem;
+    background-color: #0070f3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer
+}
+
+.itemButton:hover{
+    background-color: rgb(248, 68, 128);
+}
+
+.itemButton--added{
+    background-color: #444;
+}
+
+.itemButton--added:hover{
+    background-color: rgb(248, 68, 128);
+}
