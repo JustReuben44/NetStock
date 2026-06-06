@@ -22,5 +22,26 @@ export default function ScanQrCode() {
         };
     }, []);
 
-    return <div id="reader" />;
-}
+    return (
+        <>
+            <div id="reader"></div>
+
+            <div style={{
+                position: "fixed",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: "1rem",
+                borderTop: "1px solid #333",
+                background: "#111",
+                display: "flex",
+                justifyContent: "center",
+                fontFamily: "Arial",
+            }}>
+                <h2> No Item Found</h2>
+            </div>
+        </>
+    );
+
+
+} 

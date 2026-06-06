@@ -6,7 +6,7 @@ import Link from "next/link";
 export default async function ItemDetails({ params }: { params: { itemID: string } }) {
     const supabase = await createClient();
     const { itemID } = await params
-    const { data, error } = await supabase.from("item").select("*").eq("item_id", itemID).single();
+    const { data, error } = await supabase.from("item").select("*, item_location(location_id, location(box_type))").eq("item_id", itemID).single();
     if (error || !data) {
         notFound();
     }
@@ -29,13 +29,14 @@ export default async function ItemDetails({ params }: { params: { itemID: string
 
             </div>
 
-            <h2 style={{ textAlign: "center" }}><em>{data.itemname}</em></h2>
+            <h2 style={{ textAlign: "center" }}><em>{data.item_name}</em></h2>
 
 
         <div style={{ maxWidth: "600px", margin: "0 auto", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9" , color: "#333"}}>
             <p><strong>Description:</strong> {data.description}</p>
-            <p><strong>Type:</strong> {data.itemtype}</p>
-            <p><strong>Location:</strong> {data.locationid}</p>
+            <p><strong>Type:</strong> {data.item_type}</p>
+            <p><strong>Location:</strong> {data.item_location?.map((l: any) => l.location_id).join(", ")}</p>
+            <p><strong>Box Type:</strong> {data.item_location?.map((l: any) => l.location?.box_type).filter(Boolean).join(", ")}</p>
         </div>
     </main>
 )

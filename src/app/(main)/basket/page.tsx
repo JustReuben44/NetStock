@@ -28,7 +28,7 @@ export default function Basket() {
 
       const { data: itemRows, error: itemError } = await supabase
         .from("basket_item")
-        .select("item_id, quantity, action_type, item:item_id(item_id, itemname, itemtype, locationid)")
+        .select("item_id, quantity, action_type, item(item_id, item_name, item_type, item_location(location_id))")
         .eq("basket_id", basketRow.basket_id);
 
       if (itemError) { console.error("Basket item error:", itemError); setLoading(false); return; }
@@ -100,10 +100,7 @@ export default function Basket() {
               <li key={row.item_id} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <h4 style={{ margin: "0 0 0.25rem 0" }}>{row.item?.itemname}</h4>
-                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#aaa" }}>
-                      {row.item?.itemtype} &mdash; {row.item?.locationid}
-                    </p>
+                    <h4 style={{ margin: "0 0 0.25rem 0" }}>{row.item?.item_name}</h4>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                         <button
