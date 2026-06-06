@@ -126,8 +126,8 @@ export default function ScanQrCode() {
                 justifyContent: "center",
                 fontFamily: "Arial",
             }}>
-                <h2>{scannedResult ? scannedResult : "No Item Found"}</h2>
-                <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none" }}>
+                <h2>{scannedResult ? scannedResult : "No Box Found"}</h2>
+                <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "0.5rem", fontFamily: "Arial", listStyle: "none" }}>
         {items.map((item, key) => (
           <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
