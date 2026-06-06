@@ -123,7 +123,8 @@ export default function ScanQrCode() {
                 borderTop: "1px solid #333",
                 background: "#111",
                 display: "flex",
-                justifyContent: "center",
+                flexDirection: "column",
+                alignItems: "center",
                 fontFamily: "Arial",
             }}>
                 <h2>{scannedResult ? scannedResult : "No Box Found"}</h2>
