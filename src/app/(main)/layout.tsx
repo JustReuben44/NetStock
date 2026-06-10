@@ -11,14 +11,17 @@ export default function MainLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [basketCount, setBasketCount] = useState(0);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   useEffect(() => {
-    const checkRole = async () => {
-      const supabase = createClient();
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -31,8 +34,39 @@ export default function MainLayout({
       if (data?.role === "Administrator") {
         setIsAdmin(true);
       }
+
+      const { data: basketData } = await supabase
+        .from("basket")
+        .select("basket_id")
+        .eq("email_address", user.email)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (!basketData?.basket_id) return;
+
+      const { count } = await supabase
+        .from("basket_item")
+        .select("*", { count: "exact", head: true })
+        .eq("basket_id", basketData.basket_id);
+
+      setBasketCount(count ?? 0);
+
+      channel = supabase
+        .channel("basket-count")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "basket_item", filter: `basket_id=eq.${basketData.basket_id}` },
+          () => setBasketCount((prev) => prev + 1)
+        )
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "basket_item", filter: `basket_id=eq.${basketData.basket_id}` },
+          () => setBasketCount((prev) => prev - 1)
+        )
+        .subscribe();
     };
-    checkRole();
+
+    init();
+
+    return () => {
+      if (channel) channel.unsubscribe();
+    };
   }, []);
 
   return (
@@ -56,11 +90,23 @@ export default function MainLayout({
   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
 </svg>
 </a>
-            <a className= "highlight" href="/basket">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-           </a>
+            <a className="highlight" href="/basket" style={{ position: "relative", display: "inline-flex" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              {basketCount > 0 && (
+                <span style={{
+                  position: "absolute", top: "-6px", right: "-6px",
+                  background: "#0070f3", color: "#fff",
+                  borderRadius: "50%", fontSize: "0.65rem",
+                  width: "16px", height: "16px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: "bold", lineHeight: 1,
+                }}>
+                  {basketCount}
+                </span>
+              )}
+            </a>
           </div>
         </div>
       </header>
