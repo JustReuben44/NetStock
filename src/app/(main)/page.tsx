@@ -28,6 +28,8 @@ async function getOrCreateBasket(email: string): Promise<string | null> {
 
 export default function SearchItems() {
   const [searchTerm, setSearchTerm] = useState({ input: "" });
+  const [boxFilter, setBoxFilter] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [items, setItems] = useState<any[]>([]);
   const [basketItemIds, setBasketItemIds] = useState<Set<string>>(new Set());
   const [basketId, setBasketId] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function SearchItems() {
       if (!user?.email) return;
 
       const [{ data: itemData }, bid] = await Promise.all([
-        supabase.from("item").select("*"),
+        supabase.from("item").select("*").order('item_name'),
         getOrCreateBasket(user.email),
       ]);
 
@@ -59,13 +61,39 @@ export default function SearchItems() {
     init();
   }, []);
 
+  const fetchItems = async (search: string, box: string, order: "asc" | "desc") => {
+    let query = supabase.from("item").select("*");
+
+    if (search) {
+      query = query.or(`item_name.ilike.%${search}%,item_type.ilike.%${search}%,product_group.ilike.%${search}%`);
+    }
+
+    if (box) {
+      const { data: locationData } = await supabase
+        .from("item_location")
+        .select("item_id")
+        .eq("location_id", box);
+
+      const itemIds = locationData?.map((r: any) => r.item_id) ?? [];
+      if (itemIds.length === 0) { setItems([]); return; }
+      query = query.in("item_id", itemIds);
+    }
+
+    query = query.order("item_name", { ascending: order === "asc" });
+
+    const { data, error } = await query;
+    if (!error && data) setItems(data);
+  };
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const { data, error } = await supabase
-      .from("item")
-      .select("*")
-      .or(`item_name.ilike.%${searchTerm.input}%,item_type.ilike.%${searchTerm.input}%`);
-    if (!error && data) setItems(data);
+    fetchItems(searchTerm.input, boxFilter, sortOrder);
+  };
+
+  const toggleSort = () => {
+    const next = sortOrder === "asc" ? "desc" : "asc";
+    setSortOrder(next);
+    fetchItems(searchTerm.input, boxFilter, next);
   };
 
   const addToBasket = async (itemId: string) => {
@@ -92,7 +120,7 @@ export default function SearchItems() {
     <main>
       <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
         <h2 style={{ textAlign: "center" }}><em>Search Stock</em></h2>
-        <form onSubmit={handleSubmit} style={{ display: "flex", justifyContent: "center", marginBottom: "2rem" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
           <input
             type="text"
             placeholder="e.g fibre cables"
@@ -103,8 +131,22 @@ export default function SearchItems() {
         </form>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <p style={{ textAlign: "center", fontStyle: "italic", fontFamily: "Arial" }}>Showing {items.length} results</p>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center", fontFamily: "Arial" }}>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
+          <button type="button" className="itemButton" onClick={toggleSort}>
+            {sortOrder === "asc" ? "A → Z" : "Z → A"}
+          </button>
+        </div>
+        <p style={{ fontStyle: "italic", margin: 0 }}>Showing {items.length} results</p>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+          <input
+            type="text"
+            placeholder="search by box"
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "120px", borderRadius: "4px", border: "1px solid #ccc" }}
+            value={boxFilter}
+            onChange={(e) => setBoxFilter(e.target.value)}
+          />
+        </div>
       </div>
 
       <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none" }}>
@@ -122,7 +164,7 @@ export default function SearchItems() {
                     {basketItemIds.has(item.item_id) ? "Added" : "Add"}
                   </button>
                   )}
-                  <a href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`/${item.item_id}`}>
                     <button className="itemButton">View</button>
                   </a>
                 </div>

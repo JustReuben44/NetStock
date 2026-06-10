@@ -1,0 +1,15 @@
+.adminButton{
+    background-color: #0070f3;
+    color: #fff;
+    width: 220px;
+    height: 160px;
+    font-size: 1.2rem; 
+    font-weight: "bold";
+    border-radius: 12px; 
+    cursor: "pointer";
+    border: "2px solid #ccc";
+}
+
+.adminButton:hover{
+    background-color: rgb(248, 68, 128);
+}

@@ -35,7 +35,8 @@ export default async function ItemDetails({ params }: { params: { itemID: string
         <div style={{ maxWidth: "600px", margin: "0 auto", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9" , color: "#333"}}>
             <p><strong>Description:</strong> {data.description}</p>
             <p><strong>Type:</strong> {data.item_type}</p>
-            <p><strong>Location:</strong> {data.item_location?.map((l: any) => l.location_id).join(", ")}</p>
+            <p><strong>Product Group:</strong> {data.product_group}</p>
+            <p><strong>Location(s):</strong> {data.item_location?.map((l: any) => l.location_id).join(", ")}</p>
             <p><strong>Box Type:</strong> {data.item_location?.map((l: any) => l.location?.box_type).filter(Boolean).join(", ")}</p>
         </div>
     </main>
