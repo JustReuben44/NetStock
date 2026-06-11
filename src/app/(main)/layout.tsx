@@ -25,7 +25,7 @@ export default function MainLayout({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("users")
         .select("role")
         .eq("email_address", user.email)
