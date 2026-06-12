@@ -12,7 +12,7 @@ export default function MainLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [basketCount, setBasketCount] = useState(0);
-
+  const [name, setName] = useState();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -25,15 +25,14 @@ export default function MainLayout({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("users")
-        .select("role")
+        .select("name, role")
         .eq("email_address", user.email)
         .single();
 
-      if (data?.role === "Administrator") {
-        setIsAdmin(true);
-      }
+      if (data?.role === "Administrator") setIsAdmin(true);
+      setName(data?.name);
 
       const { data: basketData } = await supabase
         .from("basket")
@@ -153,6 +152,15 @@ export default function MainLayout({
         My Borrowed Items
       </a>
     </li>
+    <li className="list">
+      <a className= "nav-link" href="/scan-qr-code">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="20" height="20" className="icon">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+        </svg>
+        Scan QR Code
+      </a>
+    </li>
     {isAdmin && (
     <li className="list">
       <a className="nav-link" href="/admin">
@@ -168,6 +176,7 @@ export default function MainLayout({
   </div>
 
   <div className="sidebarFooter">
+    <p style={{fontFamily: "Arial"}}> Hi, {name}!</p>
     <a className="nav-link" href="/login">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="20" height="20" className="icon">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
