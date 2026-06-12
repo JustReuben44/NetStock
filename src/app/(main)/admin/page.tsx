@@ -4,6 +4,11 @@ export default function AdminPage() {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", gap: "2rem" }}>
       <h2 style={{ fontStyle: "italic", fontFamily: "arial" }}>Admin</h2>
       <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", justifyContent: "center", flexDirection: "column"}}>
+        <a href="/admin/settings" style={{ textDecoration: "none" }}>
+          <button className="adminButton">
+            Settings
+          </button>
+        </a>
         <a href="/admin/manage-users" style={{ textDecoration: "none" }}>
           <button className="adminButton">
             Manage Users

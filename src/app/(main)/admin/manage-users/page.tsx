@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase-client";
 import { useEffect, useState } from "react";
 import "./page.css";
 
-
 const supabase = createClient();
 
 export default function ShowUsers() {
@@ -16,26 +15,15 @@ export default function ShowUsers() {
   const [newUser, setNewUser] = useState({ name: "", surname: "", email_address: "", role: "Staff" });
 
   useEffect(() => {
-    const init = async () => {
-      const { data: userData } = await supabase
-        .from("users")
-        .select("*")
-        .order("name");
-
-      if (userData) setUsers(userData);
-    };
-    init();
+    fetchUsers("", "asc");
   }, []);
 
   const fetchUsers = async (search: string, order: "asc" | "desc") => {
     let query = supabase.from("users").select("*");
-
     if (search) {
       query = query.or(`name.ilike.%${search}%,surname.ilike.%${search}%,email_address.ilike.%${search}%,role.ilike.%${search}%`);
     }
-
     query = query.order("name", { ascending: order === "asc" });
-
     const { data, error } = await query;
     if (!error && data) setUsers(data);
   };
@@ -58,46 +46,34 @@ export default function ShowUsers() {
 
   const deleteUser = async (email: string, name: string) => {
     if (!window.confirm(`Are you sure you want to delete ${name}?`)) return;
-    const res = await fetch("/api/admin/users", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    if (res.ok) {
+    const { error } = await supabase.from("users").delete().eq("email_address", email);
+    if (!error) {
       await fetchUsers(searchTerm.input, sortOrder);
     } else {
-      console.error("Delete failed", await res.json());
+      console.error("Delete failed", error.message);
     }
   };
 
   const saveEdit = async (email: string) => {
-    const res = await fetch("/api/admin/users", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, ...editDraft }),
-    });
-    if (res.ok) {
+    const { error } = await supabase.from("users").update(editDraft).eq("email_address", email);
+    if (!error) {
       setEditingId(null);
       setEditDraft({});
       await fetchUsers(searchTerm.input, sortOrder);
     } else {
-      console.error("Update failed", await res.json());
+      console.error("Update failed", error.message);
     }
   };
 
   const createUser = async () => {
-    const res = await fetch("/api/admin/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
-    });
-    if (res.ok) {
+    const { error } = await supabase.from("users").insert(newUser);
+    if (!error) {
       setNewUser({ name: "", surname: "", email_address: "", role: "Staff" });
       setShowCreate(false);
       await fetchUsers(searchTerm.input, sortOrder);
       window.alert("User created successfully");
     } else {
-      console.error("Create failed", await res.json());
+      console.error("Create failed", error.message);
     }
   };
 
