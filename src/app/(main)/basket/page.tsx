@@ -87,10 +87,19 @@ export default function Basket() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) { setCheckingOut(false); return; }
 
+    const { data: settingsRow } = await supabase
+      .from("setting")
+      .select("reminder_interval")
+      .eq("setting_id", 1)
+      .single();
+    const reminderDays = settingsRow?.reminder_interval ?? 7;
+
     const errors: string[] = [];
     const skipped: string[] = [];
     const processedIds: string[] = [];
-    const now = new Date().toISOString();
+    const now = new Date();
+    const expiry = new Date(now);
+    expiry.setDate(expiry.getDate() + reminderDays);
 
     for (const row of basketItems) {
       const itemType = row.item?.item_type;
@@ -124,13 +133,15 @@ export default function Basket() {
             .eq("item_id", row.item_id);
           if (updateError) { errors.push(`${itemName}: failed to update stock`); continue; }
 
-          await supabase.from("borrow").insert({
+          const { error: borrowError } = await supabase.from("borrow").insert({
             item_id: row.item_id,
             email_address: user.email,
             amount_borrowed: row.quantity,
-            date_borrowed: now,
-            status: "active",
+            date_borrowed: now.toISOString(),
+            timer_expiry: expiry.toISOString(),
+            status: "borrowed",
           });
+          if (borrowError) console.error("Borrow insert error:", borrowError);
         } else {
           const { error: updateError } = await supabase
             .from("tool")
@@ -139,12 +150,13 @@ export default function Basket() {
           if (updateError) { errors.push(`${itemName}: failed to update stock`); continue; }
         }
 
-        await supabase.from("audit").insert({
+        const { error: auditError } = await supabase.from("audit").insert({
           item_id: row.item_id,
           email_address: user.email,
           quantity: row.action_type === "withdraw" ? -row.quantity : row.quantity,
-          occurred_at: now,
+          occurred_at: now.toISOString(),
         });
+        if (auditError) console.error("Audit insert error:", auditError);
 
         processedIds.push(row.item_id);
       }

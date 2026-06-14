@@ -30,6 +30,7 @@ export default function ItemDetails() {
   const [basketId, setBasketId] = useState<string | null>(null);
   const [inBasket, setInBasket] = useState(false);
   const [basketError, setBasketError] = useState<string | null>(null);
+  const [audits, setAudits] = useState<any[]>([]);
 
   const loadItem = async () => {
     const [{ data: itemData, error: itemError }, { data: eqData }, { data: toolData }] = await Promise.all([
@@ -41,6 +42,13 @@ export default function ItemDetails() {
     setItem(itemData);
     setEquipment(eqData ?? null);
     setTool(toolData ?? null);
+
+    const { data: auditData } = await supabase
+      .from("audit")
+      .select("audit_number, email_address, quantity, occurred_at")
+      .eq("item_id", itemID)
+      .order("occurred_at", { ascending: false });
+    setAudits(auditData ?? []);
   };
 
   useEffect(() => {
@@ -382,6 +390,29 @@ export default function ItemDetails() {
             )}
             {tool && (
               <p><strong>Quantity:</strong> {tool.quantity ?? "—"}</p>
+            )}
+          </div>
+
+          <div style={{ maxWidth: "600px", margin: "1.5rem auto 0", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9", color: "#333" }}>
+            <h3 style={{ margin: "0 0 0.75rem 0" }}>Audit Log</h3>
+            {audits.length === 0 ? (
+              <p style={{ margin: 0, fontStyle: "italic", color: "#888" }}>No audit records yet.</p>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {audits.map((a) => (
+                  <li key={a.audit_number} style={{ borderBottom: "1px solid #ddd", padding: "0.5rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.9rem" }}>
+                    <div>
+                      <span style={{ fontWeight: "bold", color: a.quantity > 0 ? "#27ae60" : "#c0392b" }}>
+                        {a.quantity > 0 ? `+${a.quantity}` : a.quantity}
+                      </span>
+                      <span style={{ marginLeft: "0.75rem", color: "#555" }}>{a.email_address}</span>
+                    </div>
+                    <span style={{ color: "#888" }}>
+                      {new Date(a.occurred_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </>

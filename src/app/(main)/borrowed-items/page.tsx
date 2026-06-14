@@ -28,7 +28,7 @@ export default function BorrowedItems() {
       const query = supabase
         .from("borrow")
         .select("borrow_id, item_id, email_address, amount_borrowed, date_borrowed, timer_expiry, status, item(item_name)")
-        .eq("status", "active")
+        .eq("status", "borrowed")
         .order("date_borrowed", { ascending: false });
 
       if (!admin) query.eq("email_address", user.email);

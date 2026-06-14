@@ -23,7 +23,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     const { data } = await supabase
-      .from("settings")
+      .from("setting")
       .select("reminder_interval")
       .eq("setting_id", 1)
       .maybeSingle();
@@ -49,7 +49,7 @@ export default function SettingsPage() {
     setReminderSaving(true);
     setReminderMsg(null);
     const { error } = await supabase
-      .from("settings")
+      .from("setting")
       .update({ reminder_interval: Number(reminderDraft) })
       .eq("setting_id", 1);
     setReminderSaving(false);
