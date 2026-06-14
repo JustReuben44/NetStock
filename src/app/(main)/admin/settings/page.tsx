@@ -92,8 +92,8 @@ export default function SettingsPage() {
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           <li style={{ borderBottom: "1px solid #ccc", padding: "1rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <p style={{ margin: 0, fontWeight: "bold" }}>Interval (days)</p>
-              <p style={{ margin: "0.25rem 0 0", color: "#555" }}>Currently: {reminderInterval !== "" ? `${reminderInterval} day${reminderInterval === 1 ? "" : "s"}` : "—"}</p>
+              <p style={{ margin: 0, fontWeight: "bold" }}>Interval (minutes)</p>
+              <p style={{ margin: "0.25rem 0 0", color: "#555" }}>Currently: {reminderInterval !== "" ? `${reminderInterval} minute${reminderInterval === 1 ? "" : "s"}` : "—"}</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <input

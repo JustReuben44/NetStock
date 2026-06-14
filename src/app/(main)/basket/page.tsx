@@ -92,14 +92,13 @@ export default function Basket() {
       .select("reminder_interval")
       .eq("setting_id", 1)
       .single();
-    const reminderDays = settingsRow?.reminder_interval ?? 7;
+    const reminderMinutes = settingsRow?.reminder_interval ?? 60;
 
     const errors: string[] = [];
     const skipped: string[] = [];
     const processedIds: string[] = [];
     const now = new Date();
-    const expiry = new Date(now);
-    expiry.setDate(expiry.getDate() + reminderDays);
+    const expiry = new Date(now.getTime() + reminderMinutes * 60 * 1000);
 
     for (const row of basketItems) {
       const itemType = row.item?.item_type;

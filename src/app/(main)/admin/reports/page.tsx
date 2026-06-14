@@ -1,0 +1,146 @@
+"use client";
+import { createClient } from "@/lib/supabase-client";
+import { useEffect, useState } from "react";
+import "../../page.css";
+
+const supabase = createClient();
+
+type ReportType = "users" | "items";
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function monthOptions() {
+  const options: { label: string; value: string }[] = [{ label: "All time", value: "" }];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    options.push({
+      label: `${MONTHS[d.getMonth()]} ${d.getFullYear()}`,
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+    });
+  }
+  return options;
+}
+
+export default function ReportsPage() {
+  const [reportType, setReportType] = useState<ReportType>("users");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [userReport, setUserReport] = useState<{ email_address: string; total: number }[]>([]);
+  const [itemReport, setItemReport] = useState<{ item_id: string; item_name: string; total: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadReport(reportType, selectedMonth);
+  }, [reportType, selectedMonth]);
+
+  const loadReport = async (type: ReportType, month: string) => {
+    setLoading(true);
+
+    let query = supabase.from("audit").select(
+      type === "users" ? "email_address, quantity" : "item_id, quantity, item(item_name)"
+    ).lt("quantity", 0);
+
+    if (month) {
+      const [year, m] = month.split("-").map(Number);
+      const start = new Date(year, m - 1, 1).toISOString();
+      const end = new Date(year, m, 1).toISOString();
+      query = query.gte("occurred_at", start).lt("occurred_at", end);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) { setLoading(false); return; }
+
+    if (type === "users") {
+      const totals: Record<string, number> = {};
+      for (const row of data) {
+        totals[row.email_address] = (totals[row.email_address] ?? 0) + Math.abs(row.quantity);
+      }
+      setUserReport(
+        Object.entries(totals)
+          .map(([email_address, total]) => ({ email_address, total }))
+          .sort((a, b) => b.total - a.total)
+      );
+    } else {
+      const totals: Record<string, { item_name: string; total: number }> = {};
+      for (const row of data) {
+        const name = (row.item as any)?.item_name ?? row.item_id;
+        if (!totals[row.item_id]) totals[row.item_id] = { item_name: name, total: 0 };
+        totals[row.item_id].total += Math.abs(row.quantity);
+      }
+      setItemReport(
+        Object.entries(totals)
+          .map(([item_id, { item_name, total }]) => ({ item_id, item_name, total }))
+          .sort((a, b) => b.total - a.total)
+      );
+    }
+
+    setLoading(false);
+  };
+
+  const months = monthOptions();
+  const rows = reportType === "users" ? userReport : itemReport;
+
+  return (
+    <main style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+      <h2 style={{ textAlign: "center" }}><em>Reports</em></h2>
+
+      <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginBottom: "1rem" }}>
+        <button
+          className="itemButton"
+          style={{ opacity: reportType === "users" ? 1 : 0.5 }}
+          onClick={() => setReportType("users")}
+        >
+          Top Users
+        </button>
+        <button
+          className="itemButton"
+          style={{ opacity: reportType === "items" ? 1 : 0.5 }}
+          onClick={() => setReportType("items")}
+        >
+          Top Items
+        </button>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          style={{ fontSize: "0.9rem", padding: "0.3rem 0.6rem", borderRadius: "4px", border: "1px solid #ccc", background: "#1a1a1a", color: "white", cursor: "pointer" }}
+        >
+          {months.map((m) => (
+            <option key={m.value} value={m.value}>{m.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <p style={{ textAlign: "center" }}>Loading...</p>
+      ) : (
+        <>
+          <p style={{ textAlign: "center", fontStyle: "italic" }}>
+            {reportType === "users" ? "Users" : "Items"} ranked by total quantity withdrawn
+            {selectedMonth ? ` — ${months.find(m => m.value === selectedMonth)?.label}` : " — All time"}
+          </p>
+          {rows.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#888" }}>No withdrawal data for this period.</p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: "0 1rem" }}>
+              {rows.map((row: any, i) => (
+                <li key={row.email_address ?? row.item_id} style={{ borderBottom: "1px solid #ccc", padding: "0.75rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <span style={{ fontWeight: "bold", color: "#888", minWidth: "1.5rem" }}>#{i + 1}</span>
+                    <span>{row.email_address ?? row.item_name}</span>
+                  </div>
+                  <span style={{ fontWeight: "bold" }}>{row.total} withdrawn</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </main>
+  );
+}
