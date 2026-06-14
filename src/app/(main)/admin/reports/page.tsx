@@ -39,42 +39,46 @@ export default function ReportsPage() {
   const loadReport = async (type: ReportType, month: string) => {
     setLoading(true);
 
-    let query = supabase.from("audit").select(
-      type === "users" ? "email_address, quantity" : "item_id, quantity, item(item_name)"
-    ).lt("quantity", 0);
-
-    if (month) {
+    const dateFilter = (q: any) => {
+      if (!month) return q;
       const [year, m] = month.split("-").map(Number);
       const start = new Date(year, m - 1, 1).toISOString();
       const end = new Date(year, m, 1).toISOString();
-      query = query.gte("occurred_at", start).lt("occurred_at", end);
-    }
-
-    const { data, error } = await query;
-    if (error || !data) { setLoading(false); return; }
+      return q.gte("occurred_at", start).lt("occurred_at", end);
+    };
 
     if (type === "users") {
-      const totals: Record<string, number> = {};
-      for (const row of data) {
-        totals[row.email_address] = (totals[row.email_address] ?? 0) + Math.abs(row.quantity);
-      }
-      setUserReport(
-        Object.entries(totals)
-          .map(([email_address, total]) => ({ email_address, total }))
-          .sort((a, b) => b.total - a.total)
+      const { data, error } = await dateFilter(
+        supabase.from("audit").select("email_address, quantity").lt("quantity", 0)
       );
+      if (!error && data) {
+        const totals: Record<string, number> = {};
+        for (const row of data) {
+          totals[row.email_address] = (totals[row.email_address] ?? 0) + Math.abs(row.quantity);
+        }
+        setUserReport(
+          Object.entries(totals)
+            .map(([email_address, total]) => ({ email_address, total }))
+            .sort((a, b) => b.total - a.total)
+        );
+      }
     } else {
-      const totals: Record<string, { item_name: string; total: number }> = {};
-      for (const row of data) {
-        const name = (row.item as any)?.item_name ?? row.item_id;
-        if (!totals[row.item_id]) totals[row.item_id] = { item_name: name, total: 0 };
-        totals[row.item_id].total += Math.abs(row.quantity);
-      }
-      setItemReport(
-        Object.entries(totals)
-          .map(([item_id, { item_name, total }]) => ({ item_id, item_name, total }))
-          .sort((a, b) => b.total - a.total)
+      const { data, error } = await dateFilter(
+        supabase.from("audit").select("item_id, quantity, item(item_name)").lt("quantity", 0)
       );
+      if (!error && data) {
+        const totals: Record<string, { item_name: string; total: number }> = {};
+        for (const row of data) {
+          const name = (row.item as any)?.item_name ?? row.item_id;
+          if (!totals[row.item_id]) totals[row.item_id] = { item_name: name, total: 0 };
+          totals[row.item_id].total += Math.abs(row.quantity);
+        }
+        setItemReport(
+          Object.entries(totals)
+            .map(([item_id, { item_name, total }]) => ({ item_id, item_name, total }))
+            .sort((a, b) => b.total - a.total)
+        );
+      }
     }
 
     setLoading(false);
