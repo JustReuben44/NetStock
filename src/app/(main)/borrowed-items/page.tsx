@@ -1,0 +1,134 @@
+"use client";
+import { createClient } from "@/lib/supabase-client";
+import { useEffect, useState } from "react";
+import "../page.css";
+
+const supabase = createClient();
+
+export default function BorrowedItems() {
+  const [borrows, setBorrows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [returning, setReturning] = useState<string | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) { setLoading(false); return; }
+
+      const { data: userData } = await supabase
+        .from("users")
+        .select("role")
+        .eq("email_address", user.email)
+        .maybeSingle();
+
+      const admin = userData?.role === "Administrator";
+      setIsAdmin(admin);
+
+      const query = supabase
+        .from("borrow")
+        .select("borrow_id, item_id, email_address, amount_borrowed, date_borrowed, timer_expiry, status, item(item_name)")
+        .eq("status", "active")
+        .order("date_borrowed", { ascending: false });
+
+      if (!admin) query.eq("email_address", user.email);
+
+      const { data, error } = await query;
+      if (error) console.error("Borrow fetch error:", error);
+      setBorrows(data ?? []);
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  const handleReturn = async (borrowId: string, itemId: string, amountBorrowed: number) => {
+    setReturning(borrowId);
+
+    const { data: toolRow, error: toolError } = await supabase
+      .from("tool")
+      .select("quantity")
+      .eq("item_id", itemId)
+      .single();
+
+    if (toolError || !toolRow) { setReturning(null); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) { setReturning(null); return; }
+
+    const now = new Date().toISOString();
+
+    await supabase.from("tool").update({ quantity: toolRow.quantity + amountBorrowed }).eq("item_id", itemId);
+    await supabase.from("borrow").update({ status: "returned" }).eq("borrow_id", borrowId);
+    await supabase.from("audit").insert({
+      item_id: itemId,
+      email_address: user.email,
+      quantity: amountBorrowed,
+      occurred_at: now,
+    });
+
+    setBorrows((prev) => prev.filter((b) => b.borrow_id !== borrowId));
+    setReturning(null);
+  };
+
+  const formatDate = (iso: string | null) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  if (loading) return (
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+      <h2 style={{ textAlign: "center" }}><em>Borrowed Items</em></h2>
+      <p style={{ textAlign: "center" }}>Loading...</p>
+    </main>
+  );
+
+  return (
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+      <h2 style={{ textAlign: "center" }}><em>Borrowed Items</em></h2>
+
+      {borrows.length === 0 ? (
+        <p style={{ textAlign: "center", fontStyle: "italic", marginTop: "2rem" }}>No active borrows.</p>
+      ) : (
+        <>
+          <p style={{ textAlign: "center", fontStyle: "italic" }}>
+            {borrows.length} active borrow{borrows.length !== 1 ? "s" : ""}
+          </p>
+          <ul style={{ listStyle: "none", padding: "1rem" }}>
+            {borrows.map((row) => {
+              const isOverdue = row.timer_expiry && new Date(row.timer_expiry) < new Date();
+              return (
+                <li key={row.borrow_id} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <h4 style={{ margin: "0 0 0.25rem 0" }}>{row.item?.item_name ?? row.item_id}</h4>
+                      {isAdmin && (
+                        <p style={{ margin: "0 0 0.2rem", fontSize: "0.85rem", color: "#aaa" }}>{row.email_address}</p>
+                      )}
+                      <p style={{ margin: "0 0 0.2rem", fontSize: "0.85rem" }}>
+                        Qty: <strong>{row.amount_borrowed}</strong>
+                        &nbsp;&nbsp;·&nbsp;&nbsp;Borrowed: {formatDate(row.date_borrowed)}
+                        {row.timer_expiry && (
+                          <>&nbsp;&nbsp;·&nbsp;&nbsp;Due: <span style={{ color: isOverdue ? "#f44336" : "inherit" }}>{formatDate(row.timer_expiry)}</span></>
+                        )}
+                      </p>
+                      {isOverdue && (
+                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#f44336" }}>Overdue</p>
+                      )}
+                    </div>
+                    <button
+                      className="itemButton"
+                      onClick={() => handleReturn(row.borrow_id, row.item_id, row.amount_borrowed)}
+                      disabled={returning === row.borrow_id}
+                    >
+                      {returning === row.borrow_id ? "Returning..." : "Return"}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </main>
+  );
+}

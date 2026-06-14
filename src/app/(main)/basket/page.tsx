@@ -9,6 +9,8 @@ export default function Basket() {
   const [basketItems, setBasketItems] = useState<any[]>([]);
   const [basketId, setBasketId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checkoutMessage, setCheckoutMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     const fetchBasket = async () => {
@@ -77,6 +79,94 @@ export default function Basket() {
     }
   };
 
+  const handleCheckout = async () => {
+    if (!basketId || basketItems.length === 0) return;
+    setCheckingOut(true);
+    setCheckoutMessage(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) { setCheckingOut(false); return; }
+
+    const errors: string[] = [];
+    const skipped: string[] = [];
+    const processedIds: string[] = [];
+    const now = new Date().toISOString();
+
+    for (const row of basketItems) {
+      const itemType = row.item?.item_type;
+      const itemName = row.item?.item_name ?? row.item_id;
+
+      if (itemType === "Equipment") {
+        skipped.push(itemName);
+        continue;
+      }
+
+      if (itemType === "Tool") {
+        const { data: toolRow, error: toolFetchError } = await supabase
+          .from("tool")
+          .select("quantity")
+          .eq("item_id", row.item_id)
+          .single();
+
+        if (toolFetchError || !toolRow) {
+          errors.push(`${itemName}: could not fetch stock level`);
+          continue;
+        }
+
+        if (row.action_type === "withdraw") {
+          if (toolRow.quantity < row.quantity) {
+            errors.push(`${itemName}: insufficient stock (${toolRow.quantity} available, ${row.quantity} requested)`);
+            continue;
+          }
+          const { error: updateError } = await supabase
+            .from("tool")
+            .update({ quantity: toolRow.quantity - row.quantity })
+            .eq("item_id", row.item_id);
+          if (updateError) { errors.push(`${itemName}: failed to update stock`); continue; }
+
+          await supabase.from("borrow").insert({
+            item_id: row.item_id,
+            email_address: user.email,
+            amount_borrowed: row.quantity,
+            date_borrowed: now,
+            status: "active",
+          });
+        } else {
+          const { error: updateError } = await supabase
+            .from("tool")
+            .update({ quantity: toolRow.quantity + row.quantity })
+            .eq("item_id", row.item_id);
+          if (updateError) { errors.push(`${itemName}: failed to update stock`); continue; }
+        }
+
+        await supabase.from("audit").insert({
+          item_id: row.item_id,
+          email_address: user.email,
+          quantity: row.action_type === "withdraw" ? -row.quantity : row.quantity,
+          occurred_at: now,
+        });
+
+        processedIds.push(row.item_id);
+      }
+    }
+
+    for (const id of processedIds) {
+      await supabase.from("basket_item").delete().eq("basket_id", basketId).eq("item_id", id);
+    }
+    setBasketItems((prev) => prev.filter((b) => !processedIds.includes(b.item_id)));
+
+    const parts: string[] = [];
+    if (processedIds.length > 0) parts.push(`${processedIds.length} item(s) checked out successfully.`);
+    if (skipped.length > 0) parts.push(`Skipped (Equipment not yet supported): ${skipped.join(", ")}.`);
+    if (errors.length > 0) parts.push(`Errors: ${errors.join("; ")}.`);
+
+    setCheckoutMessage({
+      type: errors.length > 0 ? "error" : skipped.length > 0 ? "info" : "success",
+      text: parts.join(" "),
+    });
+    setCheckingOut(false);
+  };
+
   if (loading) return (
     <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
       <h2 style={{ textAlign: "center" }}><em>Basket</em></h2>
@@ -142,10 +232,27 @@ export default function Basket() {
         borderTop: "1px solid #333",
         background: "#111",
         display: "flex",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "center",
       }}>
-        <button className="itemButton" style={{ width: "100%", maxWidth: "400px", padding: "0.75rem" }} onClick={() => {}}>
-          Checkout
+        {checkoutMessage && (
+          <p style={{
+            textAlign: "center",
+            marginBottom: "0.5rem",
+            color: checkoutMessage.type === "success" ? "#4caf50" : checkoutMessage.type === "error" ? "#f44336" : "#ff9800",
+            fontSize: "0.9rem",
+            maxWidth: "400px",
+          }}>
+            {checkoutMessage.text}
+          </p>
+        )}
+        <button
+          className="itemButton"
+          style={{ width: "100%", maxWidth: "400px", padding: "0.75rem" }}
+          onClick={handleCheckout}
+          disabled={checkingOut || basketItems.length === 0}
+        >
+          {checkingOut ? "Processing..." : "Checkout"}
         </button>
       </div>
     </main>
