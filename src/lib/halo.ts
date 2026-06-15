@@ -32,8 +32,10 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
   });
   if (!getRes.ok) { console.error("Halo fetch failed:", await getRes.text()); return false; }
   const item = await getRes.json();
-  const currentStock = item.quantity_in_stock ?? 0;
+  console.log("[halo] item fields:", JSON.stringify({ quantity_in_stock: item.quantity_in_stock, quantity_remaining: item.quantity_remaining, instock: item.instock, stock: item.stock }));
+  const currentStock = item.quantity_in_stock ?? item.quantity_remaining ?? 0;
   const newStock = Math.max(0, currentStock + quantityChange);
+  console.log("[halo] currentStock:", currentStock, "quantityChange:", quantityChange, "newStock:", newStock);
 
   const movement: Record<string, any> = {
     item_id: numericId,
@@ -62,6 +64,8 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     body: JSON.stringify([movement]),
   });
 
-  if (!postRes.ok) { console.error("Halo stock update failed:", await postRes.text()); return false; }
+  const postBody = await postRes.json().catch(() => postRes.text());
+  console.log("[halo] ItemStock POST status:", postRes.status, "response:", JSON.stringify(postBody));
+  if (!postRes.ok) { console.error("Halo stock update failed"); return false; }
   return true;
 }
