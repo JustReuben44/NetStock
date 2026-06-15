@@ -52,10 +52,10 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     stockbin_id: -1,
     delivering_to_user: false,
     note: "",
-    quantity_in: 0,
+    quantity_in: newStock,
     quantity_issued: 0,
     quantity_remaining: newStock,
-    real_quantity_in: 0,
+    real_quantity_in: newStock,
   };
 
   console.log("[halo] movement payload:", JSON.stringify(movement));
