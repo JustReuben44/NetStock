@@ -177,12 +177,20 @@ export default function MainLayout({
 
   <div className="sidebarFooter">
     <p style={{fontFamily: "Arial"}}> Hi, {name}!</p>
-    <a className="nav-link" href="/login">
+    <button
+      className="nav-link"
+      style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0, color: "white" }}
+      onClick={async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        window.location.href = "/login";
+      }}
+    >
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="20" height="20" className="icon">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
       </svg>
-      Sign In
-    </a>
+      Sign Out
+    </button>
   </div>
 
 </div>
