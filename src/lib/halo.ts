@@ -42,7 +42,7 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     item_assettype_id: -1,
     stocklocation_id: 20,
     date: new Date().toISOString(),
-    is_stock_take: true,
+    is_stock_take: false,
     cost: 0,
     supplier_id: 0,
     purchaseorder_id: 0,
@@ -52,10 +52,10 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     stockbin_id: -1,
     delivering_to_user: false,
     note: "",
-    quantity_in: newStock,
-    quantity_issued: 0,
+    quantity_in: quantityChange > 0 ? quantityChange : 0,
+    quantity_issued: quantityChange < 0 ? Math.abs(quantityChange) : 0,
     quantity_remaining: newStock,
-    real_quantity_in: newStock,
+    real_quantity_in: quantityChange > 0 ? quantityChange : 0,
   };
 
   console.log("[halo] movement payload:", JSON.stringify(movement));
