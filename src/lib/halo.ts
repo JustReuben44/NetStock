@@ -27,12 +27,20 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
 
   const numericId = Number(haloId);
 
+  const getRes = await fetch(`${baseUrl}/api/Item/${numericId}?includedetails=true`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!getRes.ok) { console.error("Halo fetch failed:", await getRes.text()); return false; }
+  const item = await getRes.json();
+  const currentStock = item.quantity_in_stock ?? 0;
+  const newStock = Math.max(0, currentStock + quantityChange);
+
   const movement: Record<string, any> = {
     item_id: numericId,
     item_assettype_id: -1,
     stocklocation_id: 20,
     date: new Date().toISOString(),
-    is_stock_take: false,
+    is_stock_take: true,
     cost: 0,
     supplier_id: 0,
     purchaseorder_id: 0,
@@ -44,6 +52,8 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     note: "",
     quantity_in: quantityChange > 0 ? quantityChange : 0,
     quantity_issued: quantityChange < 0 ? Math.abs(quantityChange) : 0,
+    quantity_remaining: newStock,
+    real_quantity_in: quantityChange > 0 ? quantityChange : 0,
   };
 
   const postRes = await fetch(`${baseUrl}/api/ItemStock`, {
