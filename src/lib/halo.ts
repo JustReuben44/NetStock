@@ -29,14 +29,22 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
 
   const movement: Record<string, any> = {
     item_id: numericId,
+    item_assettype_id: -1,
+    stocklocation_id: 20,
+    date: new Date().toISOString(),
     is_stock_take: false,
+    cost: 0,
+    supplier_id: 0,
+    purchaseorder_id: 0,
+    purchaseorder_line_id: 0,
+    salesorder_id: 0,
+    ticket_id: 0,
+    stockbin_id: -1,
+    delivering_to_user: false,
+    note: "",
+    quantity_in: quantityChange > 0 ? quantityChange : 0,
+    quantity_issued: quantityChange < 0 ? Math.abs(quantityChange) : 0,
   };
-
-  if (quantityChange < 0) {
-    movement.quantity_issued = Math.abs(quantityChange);
-  } else {
-    movement.quantity_in = quantityChange;
-  }
 
   const postRes = await fetch(`${baseUrl}/api/ItemStock`, {
     method: "POST",
