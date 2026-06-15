@@ -11,17 +11,21 @@ export async function POST(request: Request) {
     { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  console.log("[halo-checkout] user:", user?.email, "authError:", authError);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { halo_id, quantity, action_type } = await request.json();
+  const body = await request.json();
+  console.log("[halo-checkout] body:", body);
+  const { halo_id, quantity, action_type } = body;
 
-  if (!halo_id) return NextResponse.json({ error: "No halo_id — item not linked to Halo" }, { status: 400 });
+  if (!halo_id) return NextResponse.json({ error: "No halo_id" }, { status: 400 });
 
-  // Withdraw = decrement, intake = increment
   const quantityChange = action_type === "withdraw" ? -quantity : quantity;
+  console.log("[halo-checkout] quantityChange:", quantityChange, "halo_id:", halo_id);
 
   const success = await updateHaloStock(halo_id, quantityChange);
+  console.log("[halo-checkout] success:", success);
   if (!success) return NextResponse.json({ error: "Failed to update Halo stock" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
