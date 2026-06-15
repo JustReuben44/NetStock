@@ -27,7 +27,7 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
 
   // Fetch current item to get existing stock level
   const numericId = Number(haloId);
-  const getRes = await fetch(`${baseUrl}/api/items/${numericId}`, {
+  const getRes = await fetch(`${baseUrl}/api/Item/${numericId}?includedetails=true`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!getRes.ok) { console.error("Halo fetch failed:", await getRes.text()); return false; }
@@ -36,7 +36,7 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
   const currentStock = item.stock_number ?? item.instock ?? item.in_stock ?? 0;
   const newStock = Math.max(0, currentStock + quantityChange);
 
-  const postRes = await fetch(`${baseUrl}/api/items`, {
+  const postRes = await fetch(`${baseUrl}/api/Item`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify([{ id: numericId, stock_number: newStock }]),
