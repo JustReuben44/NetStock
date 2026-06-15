@@ -27,7 +27,7 @@ export default function BorrowedItems() {
 
       const query = supabase
         .from("borrow")
-        .select("borrow_id, item_id, email_address, amount_borrowed, date_borrowed, timer_expiry, status, item(item_name)")
+        .select("borrow_id, item_id, email_address, amount_borrowed, date_borrowed, timer_expiry, status, item(item_name, item_type)")
         .eq("status", "borrowed")
         .order("date_borrowed", { ascending: false });
 
@@ -41,23 +41,42 @@ export default function BorrowedItems() {
     init();
   }, []);
 
-  const handleReturn = async (borrowId: string, itemId: string, amountBorrowed: number) => {
+  const handleReturn = async (borrowId: string, itemId: string, amountBorrowed: number, itemType?: string) => {
     setReturning(borrowId);
-
-    const { data: toolRow, error: toolError } = await supabase
-      .from("tool")
-      .select("quantity")
-      .eq("item_id", itemId)
-      .single();
-
-    if (toolError || !toolRow) { setReturning(null); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) { setReturning(null); return; }
 
+    if (itemType === "Equipment") {
+      const { data: eqRow } = await supabase
+        .from("equipment")
+        .select("halo_id")
+        .eq("item_id", itemId)
+        .single();
+
+      if (!eqRow?.halo_id) { console.error("No halo_id for equipment return"); setReturning(null); return; }
+
+      // Returning equipment = intake back into Halo stock
+      const res = await fetch("/api/halo-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ halo_id: eqRow.halo_id, quantity: amountBorrowed, action_type: "intake" }),
+      });
+      if (!res.ok) { console.error("Halo return sync failed"); setReturning(null); return; }
+    } else {
+      const { data: toolRow, error: toolError } = await supabase
+        .from("tool")
+        .select("quantity")
+        .eq("item_id", itemId)
+        .single();
+
+      if (toolError || !toolRow) { setReturning(null); return; }
+
+      await supabase.from("tool").update({ quantity: toolRow.quantity + amountBorrowed }).eq("item_id", itemId);
+    }
+
     const now = new Date().toISOString();
 
-    await supabase.from("tool").update({ quantity: toolRow.quantity + amountBorrowed }).eq("item_id", itemId);
     await supabase.from("borrow").update({ status: "returned" }).eq("borrow_id", borrowId);
     await supabase.from("audit").insert({
       item_id: itemId,
@@ -117,7 +136,7 @@ export default function BorrowedItems() {
                     </div>
                     <button
                       className="itemButton"
-                      onClick={() => handleReturn(row.borrow_id, row.item_id, row.amount_borrowed)}
+                      onClick={() => handleReturn(row.borrow_id, row.item_id, row.amount_borrowed, row.item?.item_type)}
                       disabled={returning === row.borrow_id}
                     >
                       {returning === row.borrow_id ? "Returning..." : "Return"}

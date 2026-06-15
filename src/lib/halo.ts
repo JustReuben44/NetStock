@@ -21,7 +21,7 @@ async function getHaloToken(): Promise<string> {
   return cachedToken.token;
 }
 
-export async function updateHaloStock(haloId: string, quantityChange: number): Promise<boolean> {
+export async function updateHaloStock(haloId: string, quantityChange: number): Promise<number | null> {
   const token = await getHaloToken();
   const baseUrl = process.env.HALO_BASE_URL;
 
@@ -30,12 +30,10 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
   const getRes = await fetch(`${baseUrl}/api/Item/${numericId}?includedetails=true`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!getRes.ok) { console.error("Halo fetch failed:", await getRes.text()); return false; }
+  if (!getRes.ok) { console.error("Halo fetch failed:", await getRes.text()); return null; }
   const item = await getRes.json();
-  console.log("[halo] item fields:", JSON.stringify({ quantity_in_stock: item.quantity_in_stock, quantity_remaining: item.quantity_remaining, instock: item.instock, stock: item.stock }));
   const currentStock = item.quantity_in_stock ?? item.quantity_remaining ?? 0;
   const newStock = Math.max(0, currentStock + quantityChange);
-  console.log("[halo] currentStock:", currentStock, "quantityChange:", quantityChange, "newStock:", newStock);
 
   const movement: Record<string, any> = {
     id: 0,
@@ -59,15 +57,12 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     real_quantity_in: quantityChange,
   };
 
-  console.log("[halo] movement payload:", JSON.stringify(movement));
   const postRes = await fetch(`${baseUrl}/api/ItemStock`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify([movement]),
   });
 
-  const postBody = await postRes.json().catch(() => postRes.text());
-  console.log("[halo] ItemStock POST status:", postRes.status, "response:", JSON.stringify(postBody));
-  if (!postRes.ok) { console.error("Halo stock update failed"); return false; }
-  return true;
+  if (!postRes.ok) { console.error("Halo stock update failed:", await postRes.text()); return null; }
+  return newStock;
 }

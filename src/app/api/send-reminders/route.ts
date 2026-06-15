@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { sendSlackMessage } from "@/lib/slack";
 
 // Called by Vercel Cron — secured by CRON_SECRET env var
 export async function GET(request: Request) {
@@ -30,7 +31,9 @@ export async function GET(request: Request) {
 
   for (const borrow of overdue) {
     const itemName = (borrow.item as any)?.item_name ?? borrow.item_id;
-    const success = await sendReminderNotification(borrow.email_address, itemName, borrow.amount_borrowed, borrow.timer_expiry);
+    const success = await sendSlackMessage(
+      `:warning: *Overdue Item Reminder*\n*User:* ${borrow.email_address}\n*Item:* ${itemName} (qty: ${borrow.amount_borrowed})\n*Was due:* ${new Date(borrow.timer_expiry).toLocaleString("en-GB")}`
+    );
 
     if (success) {
       await supabaseAdmin
@@ -43,20 +46,4 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ sent: results.filter((r) => r.success).length, results });
-}
-
-async function sendReminderNotification(email: string, itemName: string, quantity: number, expiry: string): Promise<boolean> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-  if (!webhookUrl) { console.error("SLACK_WEBHOOK_URL not set"); return false; }
-
-  const res = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text: `:warning: *Overdue Item Reminder*\n*User:* ${email}\n*Item:* ${itemName} (qty: ${quantity})\n*Was due:* ${new Date(expiry).toLocaleString("en-GB")}`,
-    }),
-  });
-
-  if (!res.ok) console.error("Slack webhook error:", await res.text());
-  return res.ok;
 }

@@ -7,7 +7,7 @@ import "./page.css";
 const supabase = createClient();
 
 async function getOrCreateBasket(email: string): Promise<string | null> {
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing } = await supabase
         .from("basket")
         .select("basket_id")
         .eq("email_address", email)
@@ -15,15 +15,13 @@ async function getOrCreateBasket(email: string): Promise<string | null> {
         .maybeSingle();
 
     if (existing) return existing.basket_id;
-    if (fetchError) console.log("[basket] fetch error:", fetchError.message);
 
-    const { data: created, error: createError } = await supabase
+    const { data: created } = await supabase
         .from("basket")
         .insert({ email_address: email })
         .select("basket_id")
         .single();
 
-    if (createError) console.log("[basket] create error:", createError.message);
     return created?.basket_id ?? null;
 }
 
