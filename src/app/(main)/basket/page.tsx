@@ -105,7 +105,28 @@ export default function Basket() {
       const itemName = row.item?.item_name ?? row.item_id;
 
       if (itemType === "Equipment") {
-        skipped.push(itemName);
+        const { data: eqRow } = await supabase
+          .from("equipment")
+          .select("halo_id")
+          .eq("item_id", row.item_id)
+          .single();
+
+        if (!eqRow?.halo_id) {
+          errors.push(`${itemName}: no Halo ID set — link it to a Halo item first`);
+          continue;
+        }
+
+        const res = await fetch("/api/halo-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ halo_id: eqRow.halo_id, quantity: row.quantity, action_type: row.action_type }),
+        });
+
+        if (res.ok) {
+          processedIds.push(row.item_id);
+        } else {
+          errors.push(`${itemName}: Halo sync failed`);
+        }
         continue;
       }
 
