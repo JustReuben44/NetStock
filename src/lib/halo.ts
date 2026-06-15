@@ -58,6 +58,7 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     real_quantity_in: quantityChange > 0 ? quantityChange : 0,
   };
 
+  console.log("[halo] movement payload:", JSON.stringify(movement));
   const postRes = await fetch(`${baseUrl}/api/ItemStock`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
