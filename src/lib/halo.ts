@@ -38,6 +38,7 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
   console.log("[halo] currentStock:", currentStock, "quantityChange:", quantityChange, "newStock:", newStock);
 
   const movement: Record<string, any> = {
+    id: 0,
     item_id: numericId,
     item_assettype_id: -1,
     stocklocation_id: 20,
@@ -52,10 +53,10 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
     stockbin_id: -1,
     delivering_to_user: false,
     note: "",
-    quantity_in: quantityChange,
-    quantity_issued: 0,
+    quantity_in: newStock,
+    quantity_issued: newStock,
     quantity_remaining: newStock,
-    real_quantity_in: quantityChange,
+    real_quantity_in: newStock,
   };
 
   console.log("[halo] movement payload:", JSON.stringify(movement));
