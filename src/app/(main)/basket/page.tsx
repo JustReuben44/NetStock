@@ -123,6 +123,23 @@ export default function Basket() {
         });
 
         if (res.ok) {
+          if (row.action_type === "withdraw") {
+            const { error: borrowError } = await supabase.from("borrow").insert({
+              item_id: row.item_id,
+              email_address: user.email,
+              amount_borrowed: row.quantity,
+              date_borrowed: now.toISOString(),
+              timer_expiry: expiry.toISOString(),
+              status: "borrowed",
+            });
+            if (borrowError) console.error("Equipment borrow insert error:", borrowError);
+          }
+          await supabase.from("audit").insert({
+            item_id: row.item_id,
+            email_address: user.email,
+            quantity: row.action_type === "withdraw" ? -row.quantity : row.quantity,
+            occurred_at: now.toISOString(),
+          });
           processedIds.push(row.item_id);
         } else {
           errors.push(`${itemName}: Halo sync failed`);
