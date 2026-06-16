@@ -89,6 +89,17 @@ export default function BorrowedItems() {
     setReturning(null);
   };
 
+  const handleConfirmWithdrawal = async (borrowId: string) => {
+    setReturning(borrowId);
+    const { error } = await supabase
+      .from("borrow")
+      .update({ status: "left_on_site" })
+      .eq("borrow_id", borrowId);
+    if (error) { console.error("Confirm withdrawal failed:", error); setReturning(null); return; }
+    setBorrows((prev) => prev.filter((b) => b.borrow_id !== borrowId));
+    setReturning(null);
+  };
+
   const formatDate = (iso: string | null) => {
     if (!iso) return "—";
     return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -134,13 +145,24 @@ export default function BorrowedItems() {
                         <p style={{ margin: 0, fontSize: "0.8rem", color: "#f44336" }}>Overdue</p>
                       )}
                     </div>
-                    <button
-                      className="itemButton"
-                      onClick={() => handleReturn(row.borrow_id, row.item_id, row.amount_borrowed, row.item?.item_type)}
-                      disabled={returning === row.borrow_id}
-                    >
-                      {returning === row.borrow_id ? "Returning..." : "Return"}
-                    </button>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-end" }}>
+                      <button
+                        className="itemButton"
+                        onClick={() => handleReturn(row.borrow_id, row.item_id, row.amount_borrowed, row.item?.item_type)}
+                        disabled={returning === row.borrow_id}
+                      >
+                        {returning === row.borrow_id ? "Returning..." : "Return"}
+                      </button>
+                      {row.item?.item_type === "Equipment" && (
+                        <button
+                          className="itemButton"
+                          onClick={() => handleConfirmWithdrawal(row.borrow_id)}
+                          disabled={returning === row.borrow_id}
+                        >
+                          Confirm Withdrawal
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
