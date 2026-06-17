@@ -25,15 +25,13 @@ export default function BorrowedItems() {
       const admin = userData?.role === "Administrator";
       setIsAdmin(admin);
 
-      const query = supabase
+      const { data, error } = await supabase
         .from("borrow")
         .select("borrow_id, item_id, email_address, amount_borrowed, date_borrowed, timer_expiry, status, item(item_name, item_type)")
-        .eq("status", "borrowed")
+        .eq("email_address", user.email)
+        .neq("status", "returned")
+        .neq("status", "left_on_site")
         .order("date_borrowed", { ascending: false });
-
-      if (!admin) query.eq("email_address", user.email);
-
-      const { data, error } = await query;
       if (error) console.error("Borrow fetch error:", error);
       setBorrows(data ?? []);
       setLoading(false);
