@@ -82,7 +82,9 @@ export default function ScanQrCode() {
                 .eq("location_id", scannedResult);
 
             if (!error && data) {
-            setItems(data.map((row: any) => row.item));
+                setItems(data.map((row: any) => row.item));
+            } else {
+                setItems([]);
             }
         };
 
@@ -128,6 +130,9 @@ export default function ScanQrCode() {
                 overflowY: "auto",
             }}>
                 <h2>{scannedResult ? scannedResult : "No Box Found"}</h2>
+                {scannedResult && items.length === 0 && (
+                  <p style={{ margin: 0, fontFamily: "Arial", color: "#aaa" }}>This box is empty</p>
+                )}
                 <ul style={{ width: "100%", maxWidth: "1000px", margin: "0 auto", padding: "0.5rem", fontFamily: "Arial", listStyle: "none", boxSizing: "border-box" }}>
         {items.map((item, key) => (
           <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
