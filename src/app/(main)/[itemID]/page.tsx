@@ -1,6 +1,8 @@
 "use client";
 import '../../globals.css';
 import { createClient } from "@/lib/supabase-client";
+import { getOrCreateBasket } from "@/lib/basket";
+import { useToast } from "@/components/toast";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,6 +16,7 @@ const emptyNewLocation = { rack: "", shelf: "", box: "", box_type: "" };
 export default function ItemDetails() {
   const params = useParams();
   const router = useRouter();
+  const showToast = useToast();
   const itemID = params.itemID as string;
 
   const [item, setItem] = useState<any>(null);
@@ -45,7 +48,7 @@ export default function ItemDetails() {
 
     const { data: auditData } = await supabase
       .from("audit")
-      .select("audit_number, email_address, quantity, occurred_at")
+      .select("audit_number, email_address, quantity, occurred_at, action")
       .eq("item_id", itemID)
       .order("occurred_at", { ascending: false });
     setAudits(auditData ?? []);
@@ -65,12 +68,7 @@ export default function ItemDetails() {
       if (userData?.role === "Administrator") setIsAdmin(true);
       if (pgData) setProductGroups(pgData.map((r: any) => r.product_group));
 
-      const { data: existingBasket } = await supabase.from("basket").select("basket_id").eq("email_address", user.email).eq("status", "active").maybeSingle();
-      let bid = existingBasket?.basket_id;
-      if (!bid) {
-        const { data: newBasket } = await supabase.from("basket").insert({ email_address: user.email }).select("basket_id").single();
-        bid = newBasket?.basket_id;
-      }
+      const bid = await getOrCreateBasket(supabase, user.email);
       if (bid) {
         setBasketId(bid);
         const { data: existing } = await supabase.from("basket_item").select("item_id").eq("basket_id", bid).eq("item_id", itemID).maybeSingle();
@@ -109,7 +107,7 @@ export default function ItemDetails() {
       description: editDraft.description || null,
     }).eq("item_id", itemID);
 
-    if (itemError) { window.alert("Failed to update: " + itemError.message); return; }
+    if (itemError) { showToast("error", "Failed to update: " + itemError.message); return; }
 
     if (editDraft.item_type === "Equipment") {
       if (equipment) {
@@ -124,6 +122,7 @@ export default function ItemDetails() {
           halo_id: editDraft.halo_id || null,
         });
       }
+      if (tool) await supabase.from("tool").delete().eq("item_id", itemID);
     } else if (editDraft.item_type === "Tool") {
       if (tool) {
         await supabase.from("tool").update({
@@ -135,6 +134,11 @@ export default function ItemDetails() {
           quantity: editDraft.quantity !== "" ? Number(editDraft.quantity) : null,
         });
       }
+      if (equipment) await supabase.from("equipment").delete().eq("item_id", itemID);
+    } else {
+      // Miscellaneous — remove any leftover subtype rows
+      if (equipment) await supabase.from("equipment").delete().eq("item_id", itemID);
+      if (tool) await supabase.from("tool").delete().eq("item_id", itemID);
     }
 
     for (const loc_id of locationsToRemove) {
@@ -155,30 +159,33 @@ export default function ItemDetails() {
           box: newLocation.box.trim() || null,
           box_type: newLocation.box_type.trim() || null,
         });
-        if (locError) { window.alert("Failed to create location: " + locError.message); return; }
+        if (locError) { showToast("error", "Failed to create location: " + locError.message); return; }
       }
 
       const { data: existingLink } = await supabase.from("item_location").select("item_id").eq("item_id", itemID).eq("location_id", location_id).maybeSingle();
       if (!existingLink) {
         const { error: linkError } = await supabase.from("item_location").insert({ item_id: itemID, location_id });
-        if (linkError) { window.alert("Failed to link location: " + linkError.message); return; }
+        if (linkError) { showToast("error", "Failed to link location: " + linkError.message); return; }
       }
     }
 
     await loadItem();
     setIsEditing(false);
-    window.alert("Item updated successfully");
+    showToast("success", "Item updated successfully");
   };
 
   const deleteItem = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${item.item_name}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${item.item_name}"? This also removes its basket entries, borrow records, and audit history.`)) return;
 
+    await supabase.from("basket_item").delete().eq("item_id", itemID);
+    await supabase.from("borrow").delete().eq("item_id", itemID);
+    await supabase.from("audit").delete().eq("item_id", itemID);
     await supabase.from("item_location").delete().eq("item_id", itemID);
     await supabase.from("equipment").delete().eq("item_id", itemID);
     await supabase.from("tool").delete().eq("item_id", itemID);
     const { error } = await supabase.from("item").delete().eq("item_id", itemID);
 
-    if (error) { window.alert("Failed to delete: " + error.message); return; }
+    if (error) { showToast("error", "Failed to delete: " + error.message); return; }
     router.push("/");
   };
 
@@ -404,6 +411,9 @@ export default function ItemDetails() {
                     <div>
                       <span style={{ fontWeight: "bold", color: a.quantity > 0 ? "#27ae60" : "#c0392b" }}>
                         {a.quantity > 0 ? `+${a.quantity}` : a.quantity}
+                      </span>
+                      <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", color: "#888", fontStyle: "italic" }}>
+                        {a.action === "withdraw" ? "Withdrawn" : a.action === "return" ? "Returned" : a.action === "intake" ? "Stock added" : a.quantity > 0 ? "Added" : "Withdrawn"}
                       </span>
                       <span style={{ marginLeft: "0.75rem", color: "#555" }}>{a.email_address}</span>
                     </div>

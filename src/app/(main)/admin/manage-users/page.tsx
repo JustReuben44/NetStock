@@ -1,11 +1,14 @@
 "use client"
 import { createClient } from "@/lib/supabase-client";
+import { sanitizeSearch } from "@/lib/search";
+import { useToast } from "@/components/toast";
 import { useEffect, useState } from "react";
 import "./page.css";
 
 const supabase = createClient();
 
 export default function ShowUsers() {
+  const showToast = useToast();
   const [searchTerm, setSearchTerm] = useState({ input: "" });
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [users, setUsers] = useState<any[]>([]);
@@ -20,8 +23,9 @@ export default function ShowUsers() {
 
   const fetchUsers = async (search: string, order: "asc" | "desc") => {
     let query = supabase.from("users").select("*");
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,surname.ilike.%${search}%,email_address.ilike.%${search}%,role.ilike.%${search}%`);
+    const term = sanitizeSearch(search);
+    if (term) {
+      query = query.or(`name.ilike.%${term}%,surname.ilike.%${term}%,email_address.ilike.%${term}%,role.ilike.%${term}%`);
     }
     query = query.order("name", { ascending: order === "asc" });
     const { data, error } = await query;
@@ -45,35 +49,62 @@ export default function ShowUsers() {
   };
 
   const deleteUser = async (email: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to delete ${name}?`)) return;
-    const { error } = await supabase.from("users").delete().eq("email_address", email);
-    if (!error) {
+    if (!window.confirm(`Are you sure you want to delete ${name}? This also signs them out and removes their login.`)) return;
+    const res = await fetch("/api/admin/delete-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) {
+      showToast("success", `${name} deleted`);
       await fetchUsers(searchTerm.input, sortOrder);
     } else {
-      console.error("Delete failed", error.message);
+      const errJson = await res.json().catch(() => null);
+      showToast("error", errJson?.error ?? "Failed to delete user");
     }
   };
 
   const saveEdit = async (email: string) => {
-    const { error } = await supabase.from("users").update(editDraft).eq("email_address", email);
+    // email_address is the account key (Azure login + baskets/borrows link
+    // to it) — it is deliberately not editable
+    const { error } = await supabase
+      .from("users")
+      .update({ name: editDraft.name, surname: editDraft.surname, role: editDraft.role })
+      .eq("email_address", email);
     if (!error) {
       setEditingId(null);
       setEditDraft({});
       await fetchUsers(searchTerm.input, sortOrder);
+      showToast("success", "User updated");
     } else {
-      console.error("Update failed", error.message);
+      showToast("error", "Update failed: " + error.message);
     }
   };
 
   const createUser = async () => {
-    const { error } = await supabase.from("users").insert(newUser);
+    const name = newUser.name.trim();
+    const surname = newUser.surname.trim();
+    const email = newUser.email_address.trim().toLowerCase();
+
+    if (!name || !surname || !email) {
+      showToast("error", "Name, surname and email are all required");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast("error", "Please enter a valid email address");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("users")
+      .insert({ name, surname, email_address: email, role: newUser.role });
     if (!error) {
       setNewUser({ name: "", surname: "", email_address: "", role: "Staff" });
       setShowCreate(false);
       await fetchUsers(searchTerm.input, sortOrder);
-      window.alert("User created successfully");
+      showToast("success", "User created successfully");
     } else {
-      console.error("Create failed", error.message);
+      showToast("error", "Create failed: " + error.message);
     }
   };
 
@@ -166,9 +197,9 @@ export default function ShowUsers() {
                     </div>
                     <input
                       value={editDraft.email_address}
-                      onChange={(e) => setEditDraft({ ...editDraft, email_address: e.target.value })}
-                      placeholder="Email"
-                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                      disabled
+                      title="Email is the account key and cannot be changed — delete the user and re-create them instead"
+                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", opacity: 0.6, cursor: "not-allowed" }}
                     />
                     <select
                       value={editDraft.role}

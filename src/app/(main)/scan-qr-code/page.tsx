@@ -1,29 +1,12 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
+import { getOrCreateBasket } from "@/lib/basket";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Html5Qrcode } from "html5-qrcode";
 import "./page.css";
 
 const supabase = createClient();
-
-async function getOrCreateBasket(email: string): Promise<string | null> {
-    const { data: existing } = await supabase
-        .from("basket")
-        .select("basket_id")
-        .eq("email_address", email)
-        .eq("status", "active")
-        .maybeSingle();
-
-    if (existing) return existing.basket_id;
-
-    const { data: created } = await supabase
-        .from("basket")
-        .insert({ email_address: email })
-        .select("basket_id")
-        .single();
-
-    return created?.basket_id ?? null;
-}
 
 export default function ScanQrCode() {
     const [scannedResult, setScannedResult] = useState<string | null>(null);
@@ -37,7 +20,7 @@ export default function ScanQrCode() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user?.email) return;
 
-            const bid = await getOrCreateBasket(user.email);
+            const bid = await getOrCreateBasket(supabase, user.email);
             if (!bid) return;
 
             setBasketId(bid);
@@ -148,9 +131,9 @@ export default function ScanQrCode() {
                     {basketItemIds.has(item.item_id) ? "Added" : "Add"}
                   </button>
                   )}
-                  <a href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer">
+                  <Link href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer">
                     <button className="itemButton">View</button>
-                  </a>
+                  </Link>
                 </div>
                 {errorItemId === item.item_id && (
                   <p style={{ margin: 0, fontSize: "0.8rem", color: "#c0392b" }}>Already in basket</p>

@@ -1,11 +1,13 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
+import { useToast } from "@/components/toast";
 import { useEffect, useState } from "react";
 import "../page.css";
 
 const supabase = createClient();
 
 export default function BorrowedItems() {
+  const showToast = useToast();
   const [borrows, setBorrows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -42,47 +44,38 @@ export default function BorrowedItems() {
   const handleReturn = async (borrowId: string, itemId: string, amountBorrowed: number, itemType?: string) => {
     setReturning(borrowId);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) { setReturning(null); return; }
-
     if (itemType === "Equipment") {
-      const { data: eqRow } = await supabase
-        .from("equipment")
-        .select("halo_id")
-        .eq("item_id", itemId)
-        .single();
-
-      if (!eqRow?.halo_id) { console.error("No halo_id for equipment return"); setReturning(null); return; }
-
-      // Returning equipment = intake back into Halo stock
+      // The server route puts stock back into Halo, marks the borrow
+      // returned, and writes the audit row
       const res = await fetch("/api/halo-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ halo_id: eqRow.halo_id, quantity: amountBorrowed, action_type: "intake" }),
+        body: JSON.stringify({ item_id: itemId, quantity: amountBorrowed, action_type: "intake", borrow_id: borrowId }),
       });
-      if (!res.ok) { console.error("Halo return sync failed"); setReturning(null); return; }
+      if (!res.ok) {
+        let message = "Return failed — Halo could not be updated";
+        try {
+          const errJson = await res.json();
+          if (errJson?.error) message = errJson.error;
+        } catch { /* keep generic message */ }
+        showToast("error", message);
+        setReturning(null);
+        return;
+      }
     } else {
-      const { data: toolRow, error: toolError } = await supabase
-        .from("tool")
-        .select("quantity")
-        .eq("item_id", itemId)
-        .single();
+      // Single atomic database call: restores stock, marks the borrow
+      // returned, and writes the audit row server-side
+      const { data: returned, error: returnError } = await supabase
+        .rpc("return_tool", { p_borrow_id: borrowId });
 
-      if (toolError || !toolRow) { setReturning(null); return; }
-
-      await supabase.from("tool").update({ quantity: toolRow.quantity + amountBorrowed }).eq("item_id", itemId);
+      if (returnError || !returned) {
+        showToast("error", returnError?.message ?? "Return failed — please refresh and try again");
+        setReturning(null);
+        return;
+      }
     }
 
-    const now = new Date().toISOString();
-
-    await supabase.from("borrow").update({ status: "returned" }).eq("borrow_id", borrowId);
-    await supabase.from("audit").insert({
-      item_id: itemId,
-      email_address: user.email,
-      quantity: amountBorrowed,
-      occurred_at: now,
-    });
-
+    showToast("success", "Item returned");
     setBorrows((prev) => prev.filter((b) => b.borrow_id !== borrowId));
     setReturning(null);
   };
@@ -93,7 +86,8 @@ export default function BorrowedItems() {
       .from("borrow")
       .update({ status: "left_on_site" })
       .eq("borrow_id", borrowId);
-    if (error) { console.error("Confirm withdrawal failed:", error); setReturning(null); return; }
+    if (error) { showToast("error", "Confirm withdrawal failed: " + error.message); setReturning(null); return; }
+    showToast("success", "Withdrawal confirmed");
     setBorrows((prev) => prev.filter((b) => b.borrow_id !== borrowId));
     setReturning(null);
   };

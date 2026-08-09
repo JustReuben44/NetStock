@@ -22,7 +22,9 @@ export default function Basket() {
         .select("basket_id")
         .eq("email_address", user.email)
         .eq("status", "active")
-        .single();
+        .order("basket_id")
+        .limit(1)
+        .maybeSingle();
 
       if (basketError || !basketRow) { setLoading(false); return; }
 
@@ -84,116 +86,45 @@ export default function Basket() {
     setCheckingOut(true);
     setCheckoutMessage(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) { setCheckingOut(false); return; }
-
-    const { data: settingsRow } = await supabase
-      .from("setting")
-      .select("reminder_interval")
-      .eq("setting_id", 1)
-      .single();
-    const reminderMinutes = settingsRow?.reminder_interval ?? 60;
-
     const errors: string[] = [];
-    const skipped: string[] = [];
     const processedIds: string[] = [];
-    const now = new Date();
-    const expiry = new Date(now.getTime() + reminderMinutes * 60 * 1000);
 
     for (const row of basketItems) {
       const itemType = row.item?.item_type;
       const itemName = row.item?.item_name ?? row.item_id;
 
       if (itemType === "Equipment") {
-        const { data: eqRow } = await supabase
-          .from("equipment")
-          .select("halo_id")
-          .eq("item_id", row.item_id)
-          .single();
-
-        if (!eqRow?.halo_id) {
-          errors.push(`${itemName}: no Halo ID set — link it to a Halo item first`);
-          continue;
-        }
-
+        // The server route updates Halo AND writes the borrow/audit rows
         const res = await fetch("/api/halo-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ halo_id: eqRow.halo_id, quantity: row.quantity, action_type: row.action_type }),
+          body: JSON.stringify({ item_id: row.item_id, quantity: row.quantity, action_type: row.action_type }),
         });
 
         if (res.ok) {
-          if (row.action_type === "withdraw") {
-            const { error: borrowError } = await supabase.from("borrow").insert({
-              item_id: row.item_id,
-              email_address: user.email,
-              amount_borrowed: row.quantity,
-              date_borrowed: now.toISOString(),
-              timer_expiry: expiry.toISOString(),
-              status: "borrowed",
-            });
-            if (borrowError) console.error("Equipment borrow insert error:", borrowError);
-          }
-          await supabase.from("audit").insert({
-            item_id: row.item_id,
-            email_address: user.email,
-            quantity: row.action_type === "withdraw" ? -row.quantity : row.quantity,
-            occurred_at: now.toISOString(),
-          });
           processedIds.push(row.item_id);
         } else {
-          errors.push(`${itemName}: Halo sync failed`);
+          let message = "Halo sync failed";
+          try {
+            const errJson = await res.json();
+            if (errJson?.error) message = errJson.error;
+          } catch { /* keep generic message */ }
+          errors.push(`${itemName}: ${message}`);
         }
         continue;
       }
 
       if (itemType === "Tool") {
-        const { data: toolRow, error: toolFetchError } = await supabase
-          .from("tool")
-          .select("quantity")
-          .eq("item_id", row.item_id)
-          .single();
+        // Single atomic database call: adjusts stock, creates the borrow
+        // (withdraw only) and writes the audit row server-side
+        const { data: newQuantity, error: stockError } = await supabase
+          .rpc("checkout_tool", { p_item_id: row.item_id, p_quantity: row.quantity, p_action: row.action_type });
 
-        if (toolFetchError || !toolRow) {
-          errors.push(`${itemName}: could not fetch stock level`);
+        if (stockError) { errors.push(`${itemName}: failed to update stock`); continue; }
+        if (newQuantity === null) {
+          errors.push(`${itemName}: insufficient stock (${row.quantity} requested)`);
           continue;
         }
-
-        if (row.action_type === "withdraw") {
-          if (toolRow.quantity < row.quantity) {
-            errors.push(`${itemName}: insufficient stock (${toolRow.quantity} available, ${row.quantity} requested)`);
-            continue;
-          }
-          const { error: updateError } = await supabase
-            .from("tool")
-            .update({ quantity: toolRow.quantity - row.quantity })
-            .eq("item_id", row.item_id);
-          if (updateError) { errors.push(`${itemName}: failed to update stock`); continue; }
-
-          const { error: borrowError } = await supabase.from("borrow").insert({
-            item_id: row.item_id,
-            email_address: user.email,
-            amount_borrowed: row.quantity,
-            date_borrowed: now.toISOString(),
-            timer_expiry: expiry.toISOString(),
-            status: "borrowed",
-          });
-          if (borrowError) console.error("Borrow insert error:", borrowError);
-        } else {
-          const { error: updateError } = await supabase
-            .from("tool")
-            .update({ quantity: toolRow.quantity + row.quantity })
-            .eq("item_id", row.item_id);
-          if (updateError) { errors.push(`${itemName}: failed to update stock`); continue; }
-        }
-
-        const { error: auditError } = await supabase.from("audit").insert({
-          item_id: row.item_id,
-          email_address: user.email,
-          quantity: row.action_type === "withdraw" ? -row.quantity : row.quantity,
-          occurred_at: now.toISOString(),
-        });
-        if (auditError) console.error("Audit insert error:", auditError);
 
         processedIds.push(row.item_id);
       }
@@ -206,11 +137,10 @@ export default function Basket() {
 
     const parts: string[] = [];
     if (processedIds.length > 0) parts.push(`${processedIds.length} item(s) checked out successfully.`);
-    if (skipped.length > 0) parts.push(`Skipped (Equipment not yet supported): ${skipped.join(", ")}.`);
     if (errors.length > 0) parts.push(`Errors: ${errors.join("; ")}.`);
 
     setCheckoutMessage({
-      type: errors.length > 0 ? "error" : skipped.length > 0 ? "info" : "success",
+      type: errors.length > 0 ? "error" : "success",
       text: parts.join(" "),
     });
     setCheckingOut(false);

@@ -1,28 +1,13 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
+import { getOrCreateBasket } from "@/lib/basket";
+import { sanitizeSearch } from "@/lib/search";
+import { useToast } from "@/components/toast";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import "./page.css";
 
 const supabase = createClient();
-
-async function getOrCreateBasket(email: string): Promise<string | null> {
-  const { data: existing } = await supabase
-    .from("basket")
-    .select("basket_id")
-    .eq("email_address", email)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if (existing) return existing.basket_id;
-
-  const { data: created } = await supabase
-    .from("basket")
-    .insert({ email_address: email })
-    .select("basket_id")
-    .single();
-
-  return created?.basket_id ?? null;
-}
 
 type ItemType = "Tool" | "Equipment" | "Miscellaneous";
 
@@ -41,6 +26,7 @@ const defaultNewItem = {
 };
 
 export default function SearchItems() {
+  const showToast = useToast();
   const [searchTerm, setSearchTerm] = useState({ input: "" });
   const [boxFilter, setBoxFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -61,7 +47,7 @@ export default function SearchItems() {
 
       const [{ data: itemData }, bid, { data: userData }, { data: pgData }] = await Promise.all([
         supabase.from("item").select("*").order('item_name'),
-        getOrCreateBasket(user.email),
+        getOrCreateBasket(supabase, user.email),
         supabase.from("users").select("role").eq("email_address", user.email).maybeSingle(),
         supabase.from("product_group").select("*").order("product_group"),
       ]);
@@ -87,8 +73,9 @@ export default function SearchItems() {
   const fetchItems = async (search: string, box: string, order: "asc" | "desc") => {
     let query = supabase.from("item").select("*");
 
-    if (search) {
-      query = query.or(`item_name.ilike.%${search}%,item_type.ilike.%${search}%,product_group.ilike.%${search}%`);
+    const term = sanitizeSearch(search);
+    if (term) {
+      query = query.or(`item_name.ilike.%${term}%,item_type.ilike.%${term}%,product_group.ilike.%${term}%`);
     }
 
     if (box) {
@@ -219,7 +206,7 @@ export default function SearchItems() {
     setNewItem(defaultNewItem);
     setShowCreate(false);
     await fetchItems(searchTerm.input, boxFilter, sortOrder);
-    window.alert("Item added successfully");
+    showToast("success", "Item added successfully");
   };
 
   return (
@@ -379,9 +366,9 @@ export default function SearchItems() {
                     {basketItemIds.has(item.item_id) ? "Added" : "Add"}
                   </button>
                   )}
-                  <a href={`/${item.item_id}`}>
+                  <Link href={`/${item.item_id}`}>
                     <button className="itemButton">View</button>
-                  </a>
+                  </Link>
                 </div>
                 {errorItemId === item.item_id && (
                   <p style={{ margin: 0, fontSize: "0.8rem", color: "#c0392b" }}>Already in basket</p>
