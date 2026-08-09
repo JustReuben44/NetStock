@@ -115,7 +115,7 @@ export default function ShowUsers() {
           <input
             type="text"
             placeholder="search users"
-            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid var(--border)" }}
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid #ccc" }}
             value={searchTerm.input}
             onChange={(e) => setSearchTerm({ ...searchTerm, input: e.target.value })}
           />
@@ -133,25 +133,25 @@ export default function ShowUsers() {
                 value={newUser.name}
                 onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
                 placeholder="First name"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               />
               <input
                 value={newUser.surname}
                 onChange={(e) => setNewUser({ ...newUser, surname: e.target.value })}
                 placeholder="Surname"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               />
             </div>
             <input
               value={newUser.email_address}
               onChange={(e) => setNewUser({ ...newUser, email_address: e.target.value })}
               placeholder="Email"
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
             />
             <select
               value={newUser.role}
               onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
             >
               <option value="Staff">Staff</option>
               <option value="Administrator">Administrator</option>
@@ -185,25 +185,25 @@ export default function ShowUsers() {
                         value={editDraft.name}
                         onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
                         placeholder="First name"
-                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                       />
                       <input
                         value={editDraft.surname}
                         onChange={(e) => setEditDraft({ ...editDraft, surname: e.target.value })}
                         placeholder="Surname"
-                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                       />
                     </div>
                     <input
                       value={editDraft.email_address}
                       disabled
                       title="Email is the account key and cannot be changed — delete the user and re-create them instead"
-                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", opacity: 0.6, cursor: "not-allowed" }}
+                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", opacity: 0.6, cursor: "not-allowed" }}
                     />
                     <select
                       value={editDraft.role}
                       onChange={(e) => setEditDraft({ ...editDraft, role: e.target.value })}
-                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                     >
                       <option value="Staff">Staff</option>
                       <option value="Administrator">Administrator</option>

@@ -231,7 +231,7 @@ export default function ItemDetails() {
                 min={1}
                 value={addQty}
                 onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
-                style={{ width: "60px", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--border)", fontSize: "1rem" }}
+                style={{ width: "60px", padding: "0.4rem", borderRadius: "4px", border: "1px solid #ccc", fontSize: "1rem" }}
               />
               <button
                 className={inBasket ? "itemButton itemButton--added" : "itemButton"}
@@ -268,20 +268,20 @@ export default function ItemDetails() {
             <input
               value={editDraft.item_name}
               onChange={(e) => setEditDraft({ ...editDraft, item_name: e.target.value })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
             />
             <label><strong>Description</strong></label>
             <textarea
               value={editDraft.description}
               onChange={(e) => setEditDraft({ ...editDraft, description: e.target.value })}
               rows={2}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", resize: "vertical" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", resize: "vertical" }}
             />
             <label><strong>Product Group</strong></label>
             <select
               value={editDraft.product_group}
               onChange={(e) => setEditDraft({ ...editDraft, product_group: e.target.value })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
             >
               <option value="">Select product group</option>
               {productGroups.map((pg) => <option key={pg} value={pg}>{pg}</option>)}
@@ -290,7 +290,7 @@ export default function ItemDetails() {
             <select
               value={editDraft.item_type}
               onChange={(e) => setEditDraft({ ...editDraft, item_type: e.target.value as ItemType })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
             >
               <option value="Tool">Tool</option>
               <option value="Equipment">Equipment</option>
@@ -304,13 +304,13 @@ export default function ItemDetails() {
                   type="number"
                   value={editDraft.low_stock_threshold}
                   onChange={(e) => setEditDraft({ ...editDraft, low_stock_threshold: e.target.value })}
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
                 <label><strong>Halo ID</strong></label>
                 <input
                   value={editDraft.halo_id}
                   onChange={(e) => setEditDraft({ ...editDraft, halo_id: e.target.value })}
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
               </>
             )}
@@ -322,7 +322,7 @@ export default function ItemDetails() {
                   type="number"
                   value={editDraft.quantity}
                   onChange={(e) => setEditDraft({ ...editDraft, quantity: e.target.value })}
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
               </>
             )}
@@ -330,7 +330,7 @@ export default function ItemDetails() {
             <label><strong>Locations</strong></label>
             {item.item_location?.length > 0 ? (
               item.item_location.map((l: any) => (
-                <div key={l.location_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.3rem 0.5rem", borderRadius: "4px", border: "1px solid var(--border)", backgroundColor: locationsToRemove.includes(l.location_id) ? "rgba(244, 67, 54, 0.15)" : "var(--field)" }}>
+                <div key={l.location_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.3rem 0.5rem", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: locationsToRemove.includes(l.location_id) ? "rgba(244, 67, 54, 0.15)" : "var(--field)" }}>
                   <span style={{ textDecoration: locationsToRemove.includes(l.location_id) ? "line-through" : "none", fontSize: "0.9rem" }}>
                     {l.location_id}{l.location?.box_type ? ` — ${l.location.box_type}` : ""}
                   </span>
@@ -353,19 +353,19 @@ export default function ItemDetails() {
                 value={newLocation.rack}
                 onChange={(e) => setNewLocation({ ...newLocation, rack: e.target.value })}
                 placeholder="Rack"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
               />
               <input
                 value={newLocation.shelf}
                 onChange={(e) => setNewLocation({ ...newLocation, shelf: e.target.value })}
                 placeholder="Shelf"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
               />
               <input
                 value={newLocation.box}
                 onChange={(e) => setNewLocation({ ...newLocation, box: e.target.value })}
                 placeholder="Box (optional)"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", flex: 1 }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
               />
             </div>
             {newLocation.box.trim() && (
@@ -373,7 +373,7 @@ export default function ItemDetails() {
                 value={newLocation.box_type}
                 onChange={(e) => setNewLocation({ ...newLocation, box_type: e.target.value })}
                 placeholder="Box type (optional)"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               />
             )}
             {newLocation.rack.trim() && newLocation.shelf.trim() && (

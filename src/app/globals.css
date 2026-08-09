@@ -30,17 +30,17 @@ body{
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Form controls share the dark theme everywhere */
+/* Form controls: white fields everywhere for readability on the dark theme */
 input, select, textarea{
-  background-color: var(--field);
-  color: #fff;
-  border: 1px solid var(--border);
+  background-color: #fff;
+  color: #1a1a1a;
+  border: 1px solid #ccc;
   border-radius: 4px;
   font-family: inherit;
 }
 
 input::placeholder, textarea::placeholder{
-  color: var(--muted);
+  color: #777;
 }
 
 input:disabled, select:disabled, textarea:disabled{
@@ -127,12 +127,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   animation: spin 0.8s linear infinite;
 }
 
-/* Shared dark card */
+/* Shared light card (item information, audit log, edit form).
+   Tokens are re-scoped so muted text, borders and fields inside
+   the card stay readable on the light background. */
 .card{
-  border: 1px solid var(--border);
+  --muted: #666;
+  --border: #ddd;
+  --field: #fff;
+  border: 1px solid #ccc;
   border-radius: 8px;
   padding: 1rem;
-  background-color: var(--card);
+  background-color: #f9f9f9;
+  color: #333;
 }
 
 header{
@@ -264,28 +270,4 @@ header h1{
 
 .highlight:hover{
   color: var(--accent);
-}
-
-/* Desktop: sidebar becomes a persistent panel below the header */
-@media (min-width: 1024px){
-  .menu{
-    display: none;
-  }
-
-  .overlay{
-    display: none;
-  }
-
-  .sidebar{
-    position: sticky;
-    top: 70px;
-    height: calc(100vh - 70px);
-    transform: none;
-    transition: none;
-    flex-shrink: 0;
-  }
-
-  .sidebar .sidebarHeader{
-    display: none;
-  }
 }

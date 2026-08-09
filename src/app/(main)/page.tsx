@@ -218,7 +218,7 @@ export default function SearchItems() {
           <input
             type="text"
             placeholder="e.g fibre cables"
-            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid var(--border)" }}
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid #ccc" }}
             value={searchTerm.input}
             onChange={(e) => setSearchTerm({ ...searchTerm, input: e.target.value })}
           />
@@ -237,12 +237,12 @@ export default function SearchItems() {
                 value={newItem.item_name}
                 onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
                 placeholder="Item name *"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               />
               <select
                 value={newItem.product_group}
                 onChange={(e) => setNewItem({ ...newItem, product_group: e.target.value })}
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               >
                 <option value="">Select product group</option>
                 {productGroups.map((pg) => (
@@ -254,12 +254,12 @@ export default function SearchItems() {
                 onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
                 placeholder="Description"
                 rows={2}
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", resize: "vertical" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", resize: "vertical" }}
               />
               <select
                 value={newItem.item_type}
                 onChange={(e) => setNewItem({ ...newItem, item_type: e.target.value as ItemType })}
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               >
                 <option value="Tool">Tool</option>
                 <option value="Equipment">Equipment</option>
@@ -273,13 +273,13 @@ export default function SearchItems() {
                     value={newItem.low_stock_threshold}
                     onChange={(e) => setNewItem({ ...newItem, low_stock_threshold: e.target.value })}
                     placeholder="Low stock threshold"
-                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                   />
                   <input
                     value={newItem.halo_id}
                     onChange={(e) => setNewItem({ ...newItem, halo_id: e.target.value })}
                     placeholder="Halo ID"
-                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                   />
                 </>
               )}
@@ -290,7 +290,7 @@ export default function SearchItems() {
                   value={newItem.quantity}
                   onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
                   placeholder="Quantity"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
               )}
 
@@ -300,19 +300,19 @@ export default function SearchItems() {
                   value={newItem.rack}
                   onChange={(e) => setNewItem({ ...newItem, rack: e.target.value })}
                   placeholder="Rack *"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
                 />
                 <input
                   value={newItem.shelf}
                   onChange={(e) => setNewItem({ ...newItem, shelf: e.target.value })}
                   placeholder="Shelf *"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
                 />
                 <input
                   value={newItem.box}
                   onChange={(e) => setNewItem({ ...newItem, box: e.target.value })}
                   placeholder="Box (optional)"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", flex: 1 }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
                 />
               </div>
               {newItem.box.trim() && (
@@ -320,7 +320,7 @@ export default function SearchItems() {
                   value={newItem.box_type}
                   onChange={(e) => setNewItem({ ...newItem, box_type: e.target.value })}
                   placeholder="Box type (optional)"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
                 />
               )}
 
@@ -349,7 +349,7 @@ export default function SearchItems() {
           <input
             type="text"
             placeholder="search by box"
-            style={{ padding: "0.5rem", fontSize: "1rem", width: "120px", borderRadius: "4px", border: "1px solid var(--border)" }}
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "120px", borderRadius: "4px", border: "1px solid #ccc" }}
             value={boxFilter}
             onChange={(e) => setBoxFilter(e.target.value)}
           />

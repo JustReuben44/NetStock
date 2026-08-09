@@ -100,7 +100,7 @@ export default function SettingsPage() {
                 min={1}
                 value={reminderDraft}
                 onChange={(e) => setReminderDraft(e.target.value === "" ? "" : Number(e.target.value))}
-                style={{ width: "80px", padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
+                style={{ width: "80px", padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
               />
               <button className="itemButton" onClick={saveReminderInterval} disabled={reminderSaving}>
                 {reminderSaving ? "Saving…" : "Save"}
@@ -126,7 +126,7 @@ export default function SettingsPage() {
                 value={newGroup}
                 onChange={(e) => setNewGroup(e.target.value)}
                 placeholder="Group name"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", flex: 1 }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
               />
               <button className="itemButton" onClick={createProductGroup}>Add</button>
             </div>
