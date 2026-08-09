@@ -4,6 +4,7 @@ import { getOrCreateBasket } from "@/lib/basket";
 import { sanitizeSearch } from "@/lib/search";
 import { useToast } from "@/components/toast";
 import { LoadingScreen } from "@/components/loading";
+import { BulkAddDrawer } from "@/components/bulk-add";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -37,6 +38,7 @@ export default function SearchItems() {
   const [errorItemId, setErrorItemId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
   const [newItem, setNewItem] = useState(defaultNewItem);
   const [createError, setCreateError] = useState<string | null>(null);
   const [productGroups, setProductGroups] = useState<string[]>([]);
@@ -227,9 +229,14 @@ export default function SearchItems() {
 
       {isAdmin && (
         <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem 1rem" }}>
-          <button className="itemButton" onClick={() => { setShowCreate(!showCreate); setCreateError(null); }}>
-            {showCreate ? "Cancel" : "+ Add Item"}
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <button className="itemButton" onClick={() => { setShowCreate(!showCreate); setCreateError(null); }}>
+              {showCreate ? "Cancel" : "+ Add Item"}
+            </button>
+            <button className="itemButton itemButton--ghost" onClick={() => setShowBulkAdd(true)}>
+              Bulk Add Items
+            </button>
+          </div>
 
           {showCreate && (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.75rem", maxWidth: "400px" }}>
@@ -382,6 +389,15 @@ export default function SearchItems() {
         ))}
       </ul>
       </>
+      )}
+
+      {isAdmin && (
+        <BulkAddDrawer
+          open={showBulkAdd}
+          onClose={() => setShowBulkAdd(false)}
+          productGroups={productGroups}
+          onImported={() => fetchItems(searchTerm.input, boxFilter, sortOrder)}
+        />
       )}
     </main>
   );
