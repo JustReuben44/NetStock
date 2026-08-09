@@ -1,7 +1,7 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
+import { Spinner } from "@/components/loading";
 import { useEffect, useState } from "react";
-import "../../page.css";
 
 const supabase = createClient();
 
@@ -88,20 +88,18 @@ export default function ReportsPage() {
   const rows = reportType === "users" ? userReport : itemReport;
 
   return (
-    <main style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem" }}>
       <h2 style={{ textAlign: "center" }}><em>Reports</em></h2>
 
       <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginBottom: "1rem" }}>
         <button
-          className="itemButton"
-          style={{ opacity: reportType === "users" ? 1 : 0.5 }}
+          className={reportType === "users" ? "itemButton" : "itemButton itemButton--ghost"}
           onClick={() => setReportType("users")}
         >
           Top Users
         </button>
         <button
-          className="itemButton"
-          style={{ opacity: reportType === "items" ? 1 : 0.5 }}
+          className={reportType === "items" ? "itemButton" : "itemButton itemButton--ghost"}
           onClick={() => setReportType("items")}
         >
           Top Items
@@ -112,7 +110,7 @@ export default function ReportsPage() {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          style={{ fontSize: "0.9rem", padding: "0.3rem 0.6rem", borderRadius: "4px", border: "1px solid #ccc", background: "#1a1a1a", color: "white", cursor: "pointer" }}
+          style={{ fontSize: "0.9rem", padding: "0.3rem 0.6rem", cursor: "pointer" }}
         >
           {months.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -121,7 +119,9 @@ export default function ReportsPage() {
       </div>
 
       {loading ? (
-        <p style={{ textAlign: "center" }}>Loading...</p>
+        <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
+          <Spinner />
+        </div>
       ) : (
         <>
           <p style={{ textAlign: "center", fontStyle: "italic" }}>
@@ -129,13 +129,13 @@ export default function ReportsPage() {
             {selectedMonth ? ` — ${months.find(m => m.value === selectedMonth)?.label}` : " — All time"}
           </p>
           {rows.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#888" }}>No withdrawal data for this period.</p>
+            <p style={{ textAlign: "center", color: "var(--muted)" }}>No withdrawal data for this period.</p>
           ) : (
             <ul style={{ listStyle: "none", padding: "0 1rem" }}>
               {rows.map((row: any, i) => (
-                <li key={row.email_address ?? row.item_id} style={{ borderBottom: "1px solid #ccc", padding: "0.75rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <li key={row.email_address ?? row.item_id} style={{ borderBottom: "1px solid var(--border)", padding: "0.75rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    <span style={{ fontWeight: "bold", color: "#888", minWidth: "1.5rem" }}>#{i + 1}</span>
+                    <span style={{ fontWeight: "bold", color: "var(--muted)", minWidth: "1.5rem" }}>#{i + 1}</span>
                     <span>{row.email_address ?? row.item_name}</span>
                   </div>
                   <span style={{ fontWeight: "bold" }}>{row.total} withdrawn</span>

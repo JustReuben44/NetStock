@@ -1,4 +1,7 @@
-html, body {
+/* Scoped to the login page — previously this targeted html/body globally,
+   which leaked the background into the rest of the app */
+.loginPage{
     background-image: url('./background.png');
     background-size: cover;
+    background-position: center;
 }

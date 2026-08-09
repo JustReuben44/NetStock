@@ -1,7 +1,6 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
 import { useEffect, useState } from "react";
-import "../../admin/manage-users/page.css";
 
 const supabase = createClient();
 
@@ -84,16 +83,16 @@ export default function SettingsPage() {
 
   return (
     <main>
-      <div style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto", padding: "1rem" }}>
         <h2 style={{ textAlign: "center" }}><em>Settings</em></h2>
 
         {/* Reminder Interval */}
         <h3 style={{ marginBottom: "0.5rem" }}>Reminder Interval</h3>
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          <li style={{ borderBottom: "1px solid #ccc", padding: "1rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <li style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <p style={{ margin: 0, fontWeight: "bold" }}>Interval (minutes)</p>
-              <p style={{ margin: "0.25rem 0 0", color: "#555" }}>Currently: {reminderInterval !== "" ? `${reminderInterval} minute${reminderInterval === 1 ? "" : "s"}` : "—"}</p>
+              <p style={{ margin: "0.25rem 0 0", color: "var(--muted)" }}>Currently: {reminderInterval !== "" ? `${reminderInterval} minute${reminderInterval === 1 ? "" : "s"}` : "—"}</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <input
@@ -101,7 +100,7 @@ export default function SettingsPage() {
                 min={1}
                 value={reminderDraft}
                 onChange={(e) => setReminderDraft(e.target.value === "" ? "" : Number(e.target.value))}
-                style={{ width: "80px", padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ width: "80px", padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               />
               <button className="itemButton" onClick={saveReminderInterval} disabled={reminderSaving}>
                 {reminderSaving ? "Saving…" : "Save"}
@@ -109,7 +108,7 @@ export default function SettingsPage() {
             </div>
           </li>
           {reminderMsg && (
-            <li style={{ padding: "0.5rem 0", color: reminderMsg === "Saved." ? "#27ae60" : "#c0392b", fontStyle: "italic" }}>
+            <li style={{ padding: "0.5rem 0", color: reminderMsg === "Saved." ? "var(--success)" : "var(--danger)", fontStyle: "italic" }}>
               {reminderMsg}
             </li>
           )}
@@ -119,7 +118,7 @@ export default function SettingsPage() {
         <h3 style={{ marginTop: "2rem", marginBottom: "0.5rem" }}>Product Groups</h3>
         <div style={{ marginBottom: "0.75rem" }}>
           <button className="itemButton" onClick={() => { setShowCreate(!showCreate); setGroupMsg(null); }}>
-            {showCreate ? "Cancel" : "+ Create Product Group"}
+            {showCreate ? "Cancel" : "+ Add Product Group"}
           </button>
           {showCreate && (
             <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", alignItems: "center" }}>
@@ -127,22 +126,22 @@ export default function SettingsPage() {
                 value={newGroup}
                 onChange={(e) => setNewGroup(e.target.value)}
                 placeholder="Group name"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", flex: 1 }}
               />
               <button className="itemButton" onClick={createProductGroup}>Add</button>
             </div>
           )}
           {groupMsg && (
-            <p style={{ margin: "0.5rem 0 0", color: "#c0392b", fontSize: "0.85rem" }}>{groupMsg}</p>
+            <p style={{ margin: "0.5rem 0 0", color: "var(--danger)", fontSize: "0.85rem" }}>{groupMsg}</p>
           )}
         </div>
 
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {productGroups.length === 0 && (
-            <li style={{ padding: "1rem 0", color: "#888", fontStyle: "italic" }}>No product groups yet.</li>
+            <li style={{ padding: "1rem 0", color: "var(--muted)", fontStyle: "italic" }}>No product groups yet.</li>
           )}
           {productGroups.map((group) => (
-            <li key={group} style={{ borderBottom: "1px solid #ccc", padding: "0.75rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <li key={group} style={{ borderBottom: "1px solid var(--border)", padding: "0.75rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>{group}</span>
               <button className="itemButton" onClick={() => deleteProductGroup(group)}>Delete</button>
             </li>

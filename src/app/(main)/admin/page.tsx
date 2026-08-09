@@ -4,22 +4,16 @@ import "./page.css"
 export default function AdminPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", gap: "2rem" }}>
-      <h2 style={{ fontStyle: "italic", fontFamily: "arial" }}>Admin</h2>
+      <h2 style={{ textAlign: "center" }}><em>Admin</em></h2>
       <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", justifyContent: "center", flexDirection: "column"}}>
-        <Link href="/admin/settings" style={{ textDecoration: "none" }}>
-          <button className="adminButton">
-            Settings
-          </button>
+        <Link href="/admin/settings" className="adminButton">
+          Settings
         </Link>
-        <Link href="/admin/manage-users" style={{ textDecoration: "none" }}>
-          <button className="adminButton">
-            Manage Users
-          </button>
+        <Link href="/admin/manage-users" className="adminButton">
+          Manage Users
         </Link>
-        <Link href="/admin/reports" style={{ textDecoration: "none" }}>
-          <button className="adminButton">
-            View Reports
-          </button>
+        <Link href="/admin/reports" className="adminButton">
+          View Reports
         </Link>
       </div>
     </div>

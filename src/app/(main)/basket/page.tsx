@@ -1,7 +1,7 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
+import { LoadingScreen } from "@/components/loading";
 import { useEffect, useState } from "react";
-import "../page.css";
 
 const supabase = createClient();
 
@@ -147,14 +147,14 @@ export default function Basket() {
   };
 
   if (loading) return (
-    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
       <h2 style={{ textAlign: "center" }}><em>Basket</em></h2>
-      <p style={{ textAlign: "center" }}>Loading...</p>
+      <LoadingScreen />
     </main>
   );
 
   return (
-    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem 1rem 6rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem 1rem 6rem" }}>
       <h2 style={{ textAlign: "center" }}><em>Basket</em></h2>
 
       {basketItems.length === 0 ? (
@@ -166,7 +166,7 @@ export default function Basket() {
           </p>
           <ul style={{ listStyle: "none", padding: "1rem" }}>
             {basketItems.map((row) => (
-              <li key={row.item_id} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
+              <li key={row.item_id} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <h4 style={{ margin: "0 0 0.25rem 0" }}>{row.item?.item_name}</h4>
@@ -188,7 +188,7 @@ export default function Basket() {
                       <select
                         value={row.action_type}
                         onChange={(e) => updateActionType(row.item_id, e.target.value)}
-                        style={{ fontSize: "0.85rem", padding: "0.2rem 0.4rem", borderRadius: "4px", border: "1px solid #ccc", background: "#1a1a1a", color: "white", cursor: "pointer" }}
+                        style={{ fontSize: "0.85rem", padding: "0.2rem 0.4rem", cursor: "pointer" }}
                       >
                         <option value="withdraw">Withdraw</option>
                         <option value="intake">Intake</option>
@@ -208,8 +208,8 @@ export default function Basket() {
         left: 0,
         right: 0,
         padding: "1rem",
-        borderTop: "1px solid #333",
-        background: "#111",
+        borderTop: "1px solid var(--border)",
+        background: "var(--surface)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -218,7 +218,7 @@ export default function Basket() {
           <p style={{
             textAlign: "center",
             marginBottom: "0.5rem",
-            color: checkoutMessage.type === "success" ? "#4caf50" : checkoutMessage.type === "error" ? "#f44336" : "#ff9800",
+            color: checkoutMessage.type === "success" ? "var(--success)" : checkoutMessage.type === "error" ? "var(--danger)" : "var(--warning)",
             fontSize: "0.9rem",
             maxWidth: "400px",
           }}>

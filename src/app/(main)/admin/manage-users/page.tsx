@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase-client";
 import { sanitizeSearch } from "@/lib/search";
 import { useToast } from "@/components/toast";
 import { useEffect, useState } from "react";
-import "./page.css";
 
 const supabase = createClient();
 
@@ -110,22 +109,22 @@ export default function ShowUsers() {
 
   return (
     <main>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
         <h2 style={{ textAlign: "center" }}><em>Manage Users</em></h2>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
           <input
             type="text"
             placeholder="search users"
-            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid #ccc" }}
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid var(--border)" }}
             value={searchTerm.input}
             onChange={(e) => setSearchTerm({ ...searchTerm, input: e.target.value })}
           />
         </form>
       </div>
 
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem 1rem", fontFamily: "Arial" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem 1rem" }}>
         <button className="itemButton" onClick={() => setShowCreate(!showCreate)}>
-          {showCreate ? "Cancel" : "+ Create User"}
+          {showCreate ? "Cancel" : "+ Add User"}
         </button>
         {showCreate && (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.75rem" }}>
@@ -134,25 +133,25 @@ export default function ShowUsers() {
                 value={newUser.name}
                 onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
                 placeholder="First name"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               />
               <input
                 value={newUser.surname}
                 onChange={(e) => setNewUser({ ...newUser, surname: e.target.value })}
                 placeholder="Surname"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               />
             </div>
             <input
               value={newUser.email_address}
               onChange={(e) => setNewUser({ ...newUser, email_address: e.target.value })}
               placeholder="Email"
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
             />
             <select
               value={newUser.role}
               onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
             >
               <option value="Staff">Staff</option>
               <option value="Administrator">Administrator</option>
@@ -164,7 +163,7 @@ export default function ShowUsers() {
         )}
       </div>
 
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center", fontFamily: "Arial" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center" }}>
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
           <button type="button" className="itemButton" onClick={toggleSort}>
             {sortOrder === "asc" ? "A → Z" : "Z → A"}
@@ -173,11 +172,11 @@ export default function ShowUsers() {
         <p style={{ fontStyle: "italic", margin: 0 }}>Showing {users.length} results</p>
       </div>
 
-      <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none" }}>
+      <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", listStyle: "none" }}>
         {users.map((user, key) => {
           const isEditing = editingId === user.email_address;
           return (
-            <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
+            <li key={key} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 {isEditing ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -186,25 +185,25 @@ export default function ShowUsers() {
                         value={editDraft.name}
                         onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
                         placeholder="First name"
-                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                       />
                       <input
                         value={editDraft.surname}
                         onChange={(e) => setEditDraft({ ...editDraft, surname: e.target.value })}
                         placeholder="Surname"
-                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                        style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                       />
                     </div>
                     <input
                       value={editDraft.email_address}
                       disabled
                       title="Email is the account key and cannot be changed — delete the user and re-create them instead"
-                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", opacity: 0.6, cursor: "not-allowed" }}
+                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", opacity: 0.6, cursor: "not-allowed" }}
                     />
                     <select
                       value={editDraft.role}
                       onChange={(e) => setEditDraft({ ...editDraft, role: e.target.value })}
-                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                      style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                     >
                       <option value="Staff">Staff</option>
                       <option value="Administrator">Administrator</option>
@@ -223,7 +222,7 @@ export default function ShowUsers() {
                       className="itemButton"
                       onClick={() => isEditing ? saveEdit(user.email_address) : startEdit(user)}
                     >
-                      {isEditing ? "Save" : "Update"}
+                      {isEditing ? "Save" : "Edit"}
                     </button>
                     {!isEditing && (
                       <button

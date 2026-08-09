@@ -25,7 +25,7 @@ function LoginContent() {
   };
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "80vh" }}>
+    <main className="loginPage" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
       <h1 style={{ marginBottom: "1rem", fontFamily: "Brand" }}>
         <span className="brand"> // </span> Sign In
       </h1>
@@ -39,7 +39,7 @@ function LoginContent() {
         Sign in with Microsoft
       </button>
       {isUnauthorized && (
-        <p style={{ marginTop: "1rem", color: "#ff4d6d", fontSize: "0.9rem" }}>
+        <p style={{ marginTop: "1rem", color: "var(--danger)", fontSize: "0.9rem" }}>
           No account found for that email. Please contact an administrator.
         </p>
       )}

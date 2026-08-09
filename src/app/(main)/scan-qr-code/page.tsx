@@ -4,7 +4,6 @@ import { getOrCreateBasket } from "@/lib/basket";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Html5Qrcode } from "html5-qrcode";
-import "./page.css";
 
 const supabase = createClient();
 
@@ -103,22 +102,24 @@ export default function ScanQrCode() {
                 left: 0,
                 right: 0,
                 padding: "1rem",
-                borderTop: "1px solid #333",
-                background: "#111",
+                borderTop: "1px solid var(--border)",
+                background: "var(--surface)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                fontFamily: "Arial",
                 maxHeight: "50vh",
                 overflowY: "auto",
             }}>
-                <h2>{scannedResult ? scannedResult : "No Box Found"}</h2>
-                {scannedResult && items.length === 0 && (
-                  <p style={{ margin: 0, fontFamily: "Arial", color: "#aaa" }}>This box is empty</p>
+                <h2>{scannedResult ? scannedResult : "Scan a Box"}</h2>
+                {!scannedResult && (
+                  <p style={{ margin: 0, color: "var(--muted)" }}>Point the camera at a box QR code</p>
                 )}
-                <ul style={{ width: "100%", maxWidth: "1000px", margin: "0 auto", padding: "0.5rem", fontFamily: "Arial", listStyle: "none", boxSizing: "border-box" }}>
+                {scannedResult && items.length === 0 && (
+                  <p style={{ margin: 0, color: "var(--muted)" }}>This box is empty</p>
+                )}
+                <ul style={{ width: "100%", maxWidth: "1000px", margin: "0 auto", padding: "0.5rem", listStyle: "none", boxSizing: "border-box" }}>
         {items.map((item, key) => (
-          <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
+          <li key={key} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap:"0.25rem"}}>
               <h4 style={{ margin: "0 0 0.5rem 0" }}>{item.item_name}</h4>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
@@ -131,12 +132,10 @@ export default function ScanQrCode() {
                     {basketItemIds.has(item.item_id) ? "Added" : "Add"}
                   </button>
                   )}
-                  <Link href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer">
-                    <button className="itemButton">View</button>
-                  </Link>
+                  <Link href={`/${item.item_id}`} target="_blank" rel="noopener noreferrer" className="itemButton">View</Link>
                 </div>
                 {errorItemId === item.item_id && (
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#c0392b" }}>Already in basket</p>
+                  <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--danger)" }}>Already in basket</p>
                 )}
               </div>
             </div>

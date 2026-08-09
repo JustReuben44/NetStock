@@ -1,8 +1,8 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
 import { useToast } from "@/components/toast";
+import { LoadingScreen } from "@/components/loading";
 import { useEffect, useState } from "react";
-import "../page.css";
 
 const supabase = createClient();
 
@@ -98,14 +98,14 @@ export default function BorrowedItems() {
   };
 
   if (loading) return (
-    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
       <h2 style={{ textAlign: "center" }}><em>Borrowed Items</em></h2>
-      <p style={{ textAlign: "center" }}>Loading...</p>
+      <LoadingScreen />
     </main>
   );
 
   return (
-    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
       <h2 style={{ textAlign: "center" }}><em>Borrowed Items</em></h2>
 
       {borrows.length === 0 ? (
@@ -119,22 +119,22 @@ export default function BorrowedItems() {
             {borrows.map((row) => {
               const isOverdue = row.timer_expiry && new Date(row.timer_expiry) < new Date();
               return (
-                <li key={row.borrow_id} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
+                <li key={row.borrow_id} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
                       <h4 style={{ margin: "0 0 0.25rem 0" }}>{row.item?.item_name ?? row.item_id}</h4>
                       {isAdmin && (
-                        <p style={{ margin: "0 0 0.2rem", fontSize: "0.85rem", color: "#aaa" }}>{row.email_address}</p>
+                        <p style={{ margin: "0 0 0.2rem", fontSize: "0.85rem", color: "var(--muted)" }}>{row.email_address}</p>
                       )}
                       <p style={{ margin: "0 0 0.2rem", fontSize: "0.85rem" }}>
                         Qty: <strong>{row.amount_borrowed}</strong>
                         &nbsp;&nbsp;·&nbsp;&nbsp;Borrowed: {formatDate(row.date_borrowed)}
                         {row.timer_expiry && (
-                          <>&nbsp;&nbsp;·&nbsp;&nbsp;Due: <span style={{ color: isOverdue ? "#f44336" : "inherit" }}>{formatDate(row.timer_expiry)}</span></>
+                          <>&nbsp;&nbsp;·&nbsp;&nbsp;Due: <span style={{ color: isOverdue ? "var(--danger)" : "inherit" }}>{formatDate(row.timer_expiry)}</span></>
                         )}
                       </p>
                       {isOverdue && (
-                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#f44336" }}>Overdue</p>
+                        <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--danger)" }}>Overdue</p>
                       )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-end" }}>

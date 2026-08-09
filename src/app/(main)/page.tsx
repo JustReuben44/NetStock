@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase-client";
 import { getOrCreateBasket } from "@/lib/basket";
 import { sanitizeSearch } from "@/lib/search";
 import { useToast } from "@/components/toast";
+import { LoadingScreen } from "@/components/loading";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import "./page.css";
 
 const supabase = createClient();
 
@@ -31,6 +31,7 @@ export default function SearchItems() {
   const [boxFilter, setBoxFilter] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [basketItemIds, setBasketItemIds] = useState<Set<string>>(new Set());
   const [basketId, setBasketId] = useState<string | null>(null);
   const [errorItemId, setErrorItemId] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export default function SearchItems() {
 
       if (basketData) setBasketItemIds(new Set(basketData.map((r) => r.item_id)));
     };
-    init();
+    init().finally(() => setLoading(false));
   }, []);
 
   const fetchItems = async (search: string, box: string, order: "asc" | "desc") => {
@@ -211,13 +212,13 @@ export default function SearchItems() {
 
   return (
     <main>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
         <h2 style={{ textAlign: "center" }}><em>Search Stock</em></h2>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
           <input
             type="text"
             placeholder="e.g fibre cables"
-            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid #ccc" }}
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid var(--border)" }}
             value={searchTerm.input}
             onChange={(e) => setSearchTerm({ ...searchTerm, input: e.target.value })}
           />
@@ -225,7 +226,7 @@ export default function SearchItems() {
       </div>
 
       {isAdmin && (
-        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem 1rem", fontFamily: "Arial" }}>
+        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem 1rem" }}>
           <button className="itemButton" onClick={() => { setShowCreate(!showCreate); setCreateError(null); }}>
             {showCreate ? "Cancel" : "+ Add Item"}
           </button>
@@ -236,12 +237,12 @@ export default function SearchItems() {
                 value={newItem.item_name}
                 onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
                 placeholder="Item name *"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               />
               <select
                 value={newItem.product_group}
                 onChange={(e) => setNewItem({ ...newItem, product_group: e.target.value })}
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               >
                 <option value="">Select product group</option>
                 {productGroups.map((pg) => (
@@ -253,12 +254,12 @@ export default function SearchItems() {
                 onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
                 placeholder="Description"
                 rows={2}
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", resize: "vertical" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", resize: "vertical" }}
               />
               <select
                 value={newItem.item_type}
                 onChange={(e) => setNewItem({ ...newItem, item_type: e.target.value as ItemType })}
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               >
                 <option value="Tool">Tool</option>
                 <option value="Equipment">Equipment</option>
@@ -272,13 +273,13 @@ export default function SearchItems() {
                     value={newItem.low_stock_threshold}
                     onChange={(e) => setNewItem({ ...newItem, low_stock_threshold: e.target.value })}
                     placeholder="Low stock threshold"
-                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                   />
                   <input
                     value={newItem.halo_id}
                     onChange={(e) => setNewItem({ ...newItem, halo_id: e.target.value })}
                     placeholder="Halo ID"
-                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                    style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                   />
                 </>
               )}
@@ -289,7 +290,7 @@ export default function SearchItems() {
                   value={newItem.quantity}
                   onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
                   placeholder="Quantity"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                 />
               )}
 
@@ -299,19 +300,19 @@ export default function SearchItems() {
                   value={newItem.rack}
                   onChange={(e) => setNewItem({ ...newItem, rack: e.target.value })}
                   placeholder="Rack *"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
                 />
                 <input
                   value={newItem.shelf}
                   onChange={(e) => setNewItem({ ...newItem, shelf: e.target.value })}
                   placeholder="Shelf *"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
                 />
                 <input
                   value={newItem.box}
                   onChange={(e) => setNewItem({ ...newItem, box: e.target.value })}
                   placeholder="Box (optional)"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", flex: 1 }}
                 />
               </div>
               {newItem.box.trim() && (
@@ -319,11 +320,11 @@ export default function SearchItems() {
                   value={newItem.box_type}
                   onChange={(e) => setNewItem({ ...newItem, box_type: e.target.value })}
                   placeholder="Box type (optional)"
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                 />
               )}
 
-              {createError && <p style={{ margin: 0, color: "#c0392b", fontSize: "0.85rem" }}>{createError}</p>}
+              {createError && <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.85rem" }}>{createError}</p>}
 
               <button className="itemButton" onClick={createItem} style={{ alignSelf: "flex-start" }}>
                 Save Item
@@ -333,7 +334,11 @@ export default function SearchItems() {
         </div>
       )}
 
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center", fontFamily: "Arial" }}>
+      {loading ? (
+        <LoadingScreen />
+      ) : (
+      <>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center" }}>
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
           <button type="button" className="itemButton" onClick={toggleSort}>
             {sortOrder === "asc" ? "A → Z" : "Z → A"}
@@ -344,16 +349,16 @@ export default function SearchItems() {
           <input
             type="text"
             placeholder="search by box"
-            style={{ padding: "0.5rem", fontSize: "1rem", width: "120px", borderRadius: "4px", border: "1px solid #ccc" }}
+            style={{ padding: "0.5rem", fontSize: "1rem", width: "120px", borderRadius: "4px", border: "1px solid var(--border)" }}
             value={boxFilter}
             onChange={(e) => setBoxFilter(e.target.value)}
           />
         </div>
       </div>
 
-      <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", fontFamily: "Arial", listStyle: "none" }}>
+      <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", listStyle: "none" }}>
         {items.map((item, key) => (
-          <li key={key} style={{ borderBottom: "1px solid #ccc", padding: "1rem 0" }}>
+          <li key={key} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <h4 style={{ margin: "0 0 0.5rem 0" }}>{item.item_name}</h4>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
@@ -366,18 +371,18 @@ export default function SearchItems() {
                     {basketItemIds.has(item.item_id) ? "Added" : "Add"}
                   </button>
                   )}
-                  <Link href={`/${item.item_id}`}>
-                    <button className="itemButton">View</button>
-                  </Link>
+                  <Link href={`/${item.item_id}`} className="itemButton">View</Link>
                 </div>
                 {errorItemId === item.item_id && (
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#c0392b" }}>Already in basket</p>
+                  <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--danger)" }}>Already in basket</p>
                 )}
               </div>
             </div>
           </li>
         ))}
       </ul>
+      </>
+      )}
     </main>
   );
 }

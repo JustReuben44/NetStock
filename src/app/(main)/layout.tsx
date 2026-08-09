@@ -78,7 +78,7 @@ export default function MainLayout({
     <ToastProvider>
       <header>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", justifyContent: "space-between" , flex: "1"}}>
-          <button className="menu" onClick={toggleSidebar}>
+          <button className="menu" onClick={toggleSidebar} aria-label="Open menu">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
 </svg>
@@ -89,20 +89,20 @@ export default function MainLayout({
           </div>
 
           <div style={{ display: "flex", gap: "1rem" }}>
-            <Link className="highlight" href="/scan-qr-code">
+            <Link className="highlight" href="/scan-qr-code" aria-label="Scan QR code">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
 </svg>
 </Link>
-            <Link className="highlight" href="/basket" style={{ position: "relative", display: "inline-flex" }}>
+            <Link className="highlight" href="/basket" aria-label="Basket" style={{ position: "relative", display: "inline-flex" }}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
               {basketCount > 0 && (
                 <span style={{
                   position: "absolute", top: "-6px", right: "-6px",
-                  background: "#0070f3", color: "#fff",
+                  background: "var(--primary)", color: "#fff",
                   borderRadius: "50%", fontSize: "0.65rem",
                   width: "16px", height: "16px",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -122,13 +122,13 @@ export default function MainLayout({
 <div className={`overlay${isSidebarOpen ? ' open' : ''}`} onClick={toggleSidebar} />
 <div className={`sidebar${isSidebarOpen ? ' open' : ''}`} id="sidebar">
   <div className="sidebarHeader">
-    <button className="menu" onClick={toggleSidebar}>
+    <button className="menu" onClick={toggleSidebar} aria-label="Close menu">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
       </svg>
     </button>
     <div style={{ display: "flex", flex: 1, gap: "0.5rem" }}>
-      <h1> <Link href="/"> <span className="brand"> // </span> Netstock</Link></h1>
+      <p className="sidebarTitle"> <Link href="/"> <span className="brand"> // </span> Netstock</Link></p>
     </div>
   </div>
   <div className="sidebarContent">
@@ -182,7 +182,7 @@ export default function MainLayout({
   </div>
 
   <div className="sidebarFooter">
-    <p style={{fontFamily: "Arial"}}> Hi, {name}!</p>
+    <p> Hi, {name}!</p>
     <button
       className="nav-link"
       style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0, color: "white" }}
@@ -201,7 +201,7 @@ export default function MainLayout({
 
 </div>
 
-<main style={{flexGrow: 1}}>{children}</main>
+<div style={{flexGrow: 1, minWidth: 0}}>{children}</div>
 </div>
 </ToastProvider>
 );

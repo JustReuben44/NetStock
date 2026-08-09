@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div style={{
         position: "fixed", top: "1rem", right: "1rem", zIndex: 1000,
         display: "flex", flexDirection: "column", gap: "0.5rem",
-        maxWidth: "min(360px, calc(100vw - 2rem))", fontFamily: "Arial",
+        maxWidth: "min(360px, calc(100vw - 2rem))",
       }}>
         {toasts.map((t) => (
           <div
@@ -35,7 +35,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               color: "#fff",
               fontSize: "0.9rem",
               boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
-              background: t.type === "success" ? "#27ae60" : t.type === "error" ? "#c0392b" : "#0070f3",
+              background: t.type === "success" ? "var(--success)" : t.type === "error" ? "var(--danger)" : "var(--primary)",
             }}
           >
             {t.text}

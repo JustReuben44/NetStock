@@ -3,15 +3,136 @@
   src: url('../ITC Eras Std Bold.otf') format('opentype');
 }
 
+/* Design tokens — single source of truth for the palette */
+:root{
+  --bg: #000814;
+  --surface: #010f29;
+  --card: #071228;
+  --field: #0b1a33;
+  --border: #24344d;
+  --accent: rgb(248, 68, 128);
+  --primary: #0070f3;
+  --danger: #f44336;
+  --success: #27ae60;
+  --warning: #ff9800;
+  --muted: #9aa4b2;
+}
+
 a {
   text-decoration: none;
   color: white;
 }
 
 body{
-  background-color: #000814;
+  background-color: var(--bg);
   color: #FFFFFF;
   margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Form controls share the dark theme everywhere */
+input, select, textarea{
+  background-color: var(--field);
+  color: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+input::placeholder, textarea::placeholder{
+  color: var(--muted);
+}
+
+input:disabled, select:disabled, textarea:disabled{
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Shared action button — works on <button> and <Link>/<a> alike */
+.itemButton{
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.itemButton:hover:not(:disabled){
+  background-color: var(--accent);
+}
+
+.itemButton:disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.itemButton--added, .itemButton--muted{
+  background-color: #444;
+}
+
+.itemButton--added:hover:not(:disabled), .itemButton--muted:hover:not(:disabled){
+  background-color: var(--accent);
+}
+
+.itemButton--danger{
+  background-color: var(--danger);
+}
+
+.itemButton--ghost{
+  background-color: transparent;
+  border: 1px solid var(--border);
+}
+
+.itemButton--ghost:hover:not(:disabled){
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Loading indicators */
+@keyframes loadingPulse{
+  0%, 100%{ opacity: 1; transform: scale(1); }
+  50%{ opacity: 0.35; transform: scale(0.9); }
+}
+
+@keyframes spin{
+  to{ transform: rotate(360deg); }
+}
+
+.loadingBrand{
+  display: inline-block;
+  font-family: 'Brand';
+  color: var(--accent);
+  animation: loadingPulse 1.2s ease-in-out infinite;
+}
+
+.spinner{
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Shared dark card */
+.card{
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: var(--card);
 }
 
 header{
@@ -23,9 +144,10 @@ header{
   align-items: center;
   font-family: 'Brand';
   text-align: left;
-  background-color: #010f29;
+  background-color: var(--surface);
   padding-left: 1.5rem;
   padding-right: 1.5rem;
+  z-index: 50;
 }
 
 header h1{
@@ -34,12 +156,12 @@ header h1{
 
 
 .brand{
-  color: rgb(248, 68, 128);
+  color: var(--accent);
 }
 
 .sidebar{
   width: 260px;
-  background-color: #010f29;
+  background-color: var(--surface);
   position: fixed;
   top: 0;
   left: 0;
@@ -80,8 +202,10 @@ header h1{
   flex-shrink: 0;
 }
 
-.sidebar .sidebarHeader h1{
+.sidebar .sidebarHeader .sidebarTitle{
   font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
 }
 
 .sidebar .sidebarContent{
@@ -100,7 +224,7 @@ header h1{
 
 .list .nav-link{
   display: flex;
-  align-items: center;  
+  align-items: center;
   text-decoration: none;
   padding: 14px 12px;
   border-radius: 8px;
@@ -113,7 +237,7 @@ header h1{
 }
 
 .nav-link:hover{
-  background-color: rgb(248, 68, 128);
+  background-color: var(--accent);
 }
 
 .sidebarFooter {
@@ -135,9 +259,33 @@ header h1{
 }
 
 .menu:hover{
-  color:rgb(248, 68, 128);
+  color: var(--accent);
 }
 
 .highlight:hover{
-  color:rgb(248, 68, 128);
+  color: var(--accent);
+}
+
+/* Desktop: sidebar becomes a persistent panel below the header */
+@media (min-width: 1024px){
+  .menu{
+    display: none;
+  }
+
+  .overlay{
+    display: none;
+  }
+
+  .sidebar{
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    transform: none;
+    transition: none;
+    flex-shrink: 0;
+  }
+
+  .sidebar .sidebarHeader{
+    display: none;
+  }
 }

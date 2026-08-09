@@ -3,6 +3,7 @@ import '../../globals.css';
 import { createClient } from "@/lib/supabase-client";
 import { getOrCreateBasket } from "@/lib/basket";
 import { useToast } from "@/components/toast";
+import { LoadingScreen } from "@/components/loading";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -201,20 +202,20 @@ export default function ItemDetails() {
   };
 
   if (notFound) return (
-    <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", fontFamily: "Arial", textAlign: "center" }}>
+    <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", textAlign: "center" }}>
       <p>Item not found.</p>
-      <Link href="/" style={{ color: "#0070f3" }}>Back to search</Link>
+      <Link href="/" style={{ color: "var(--primary)" }}>Back to search</Link>
     </main>
   );
 
   if (!item) return (
-    <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem", fontFamily: "Arial", textAlign: "center" }}>
-      <p>Loading...</p>
+    <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
+      <LoadingScreen />
     </main>
   );
 
   return (
-    <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "1rem", fontFamily: "Arial" }}>
+    <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "1rem" }}>
       <div style={{ justifyContent: "space-between", display: "flex", alignItems: "center", marginBottom: "1rem", gap: "1rem", flexWrap: "wrap" }}>
         <Link href="/" style={{ color: "white" }}>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="28" height="28">
@@ -230,28 +231,29 @@ export default function ItemDetails() {
                 min={1}
                 value={addQty}
                 onChange={(e) => setAddQty(Math.max(1, Number(e.target.value)))}
-                style={{ width: "60px", padding: "0.4rem", borderRadius: "4px", border: "1px solid #ccc", fontSize: "1rem" }}
+                style={{ width: "60px", padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--border)", fontSize: "1rem" }}
               />
               <button
+                className={inBasket ? "itemButton itemButton--added" : "itemButton"}
                 onClick={addToBasket}
-                style={{ padding: "0.5rem 1rem", backgroundColor: inBasket ? "#444" : "#0070f3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                style={{ padding: "0.5rem 1rem" }}
               >
                 {inBasket ? "Added" : "Add to Basket"}
               </button>
-              {basketError && <p style={{ margin: 0, color: "#c0392b", fontSize: "0.85rem" }}>{basketError}</p>}
+              {basketError && <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.85rem" }}>{basketError}</p>}
             </>
           )}
 
           {isAdmin && (
             isEditing ? (
               <>
-                <button onClick={saveEdit} style={{ padding: "0.5rem 1rem", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Save</button>
-                <button onClick={() => setIsEditing(false)} style={{ padding: "0.5rem 1rem", backgroundColor: "#444", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Cancel</button>
+                <button className="itemButton" onClick={saveEdit} style={{ padding: "0.5rem 1rem" }}>Save</button>
+                <button className="itemButton itemButton--muted" onClick={() => setIsEditing(false)} style={{ padding: "0.5rem 1rem" }}>Cancel</button>
               </>
             ) : (
               <>
-                <button onClick={startEdit} style={{ padding: "0.5rem 1rem", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Edit</button>
-                <button onClick={deleteItem} style={{ padding: "0.5rem 1rem", backgroundColor: "#c0392b", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>Delete</button>
+                <button className="itemButton" onClick={startEdit} style={{ padding: "0.5rem 1rem" }}>Edit</button>
+                <button className="itemButton itemButton--danger" onClick={deleteItem} style={{ padding: "0.5rem 1rem" }}>Delete</button>
               </>
             )
           )}
@@ -261,25 +263,25 @@ export default function ItemDetails() {
       {isEditing ? (
         <>
           <h2 style={{ textAlign: "center" }}><em>Edit Item</em></h2>
-          <div style={{ maxWidth: "600px", margin: "0 auto", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9", color: "#333", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          <div className="card" style={{ maxWidth: "600px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <label><strong>Name</strong></label>
             <input
               value={editDraft.item_name}
               onChange={(e) => setEditDraft({ ...editDraft, item_name: e.target.value })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
             />
             <label><strong>Description</strong></label>
             <textarea
               value={editDraft.description}
               onChange={(e) => setEditDraft({ ...editDraft, description: e.target.value })}
               rows={2}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", resize: "vertical" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", resize: "vertical" }}
             />
             <label><strong>Product Group</strong></label>
             <select
               value={editDraft.product_group}
               onChange={(e) => setEditDraft({ ...editDraft, product_group: e.target.value })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
             >
               <option value="">Select product group</option>
               {productGroups.map((pg) => <option key={pg} value={pg}>{pg}</option>)}
@@ -288,7 +290,7 @@ export default function ItemDetails() {
             <select
               value={editDraft.item_type}
               onChange={(e) => setEditDraft({ ...editDraft, item_type: e.target.value as ItemType })}
-              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+              style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
             >
               <option value="Tool">Tool</option>
               <option value="Equipment">Equipment</option>
@@ -302,13 +304,13 @@ export default function ItemDetails() {
                   type="number"
                   value={editDraft.low_stock_threshold}
                   onChange={(e) => setEditDraft({ ...editDraft, low_stock_threshold: e.target.value })}
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                 />
                 <label><strong>Halo ID</strong></label>
                 <input
                   value={editDraft.halo_id}
                   onChange={(e) => setEditDraft({ ...editDraft, halo_id: e.target.value })}
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                 />
               </>
             )}
@@ -320,7 +322,7 @@ export default function ItemDetails() {
                   type="number"
                   value={editDraft.quantity}
                   onChange={(e) => setEditDraft({ ...editDraft, quantity: e.target.value })}
-                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                  style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
                 />
               </>
             )}
@@ -328,20 +330,21 @@ export default function ItemDetails() {
             <label><strong>Locations</strong></label>
             {item.item_location?.length > 0 ? (
               item.item_location.map((l: any) => (
-                <div key={l.location_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.3rem 0.5rem", borderRadius: "4px", border: "1px solid #ccc", backgroundColor: locationsToRemove.includes(l.location_id) ? "#fdecea" : "#fff" }}>
-                  <span style={{ textDecoration: locationsToRemove.includes(l.location_id) ? "line-through" : "none", color: "#333", fontSize: "0.9rem" }}>
+                <div key={l.location_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.3rem 0.5rem", borderRadius: "4px", border: "1px solid var(--border)", backgroundColor: locationsToRemove.includes(l.location_id) ? "rgba(244, 67, 54, 0.15)" : "var(--field)" }}>
+                  <span style={{ textDecoration: locationsToRemove.includes(l.location_id) ? "line-through" : "none", fontSize: "0.9rem" }}>
                     {l.location_id}{l.location?.box_type ? ` — ${l.location.box_type}` : ""}
                   </span>
                   <button
                     onClick={() => toggleRemoveLocation(l.location_id)}
-                    style={{ padding: "0.15rem 0.5rem", backgroundColor: locationsToRemove.includes(l.location_id) ? "#888" : "#c0392b", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "0.8rem" }}
+                    className={locationsToRemove.includes(l.location_id) ? "itemButton itemButton--muted" : "itemButton itemButton--danger"}
+                    style={{ padding: "0.15rem 0.5rem", fontSize: "0.8rem" }}
                   >
                     {locationsToRemove.includes(l.location_id) ? "Undo" : "Remove"}
                   </button>
                 </div>
               ))
             ) : (
-              <p style={{ margin: 0, fontSize: "0.85rem", color: "#888" }}>No locations assigned</p>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted)" }}>No locations assigned</p>
             )}
 
             <label><strong>Add Location</strong></label>
@@ -350,19 +353,19 @@ export default function ItemDetails() {
                 value={newLocation.rack}
                 onChange={(e) => setNewLocation({ ...newLocation, rack: e.target.value })}
                 placeholder="Rack"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
               />
               <input
                 value={newLocation.shelf}
                 onChange={(e) => setNewLocation({ ...newLocation, shelf: e.target.value })}
                 placeholder="Shelf"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", width: "80px" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", width: "80px" }}
               />
               <input
                 value={newLocation.box}
                 onChange={(e) => setNewLocation({ ...newLocation, box: e.target.value })}
                 placeholder="Box (optional)"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)", flex: 1 }}
               />
             </div>
             {newLocation.box.trim() && (
@@ -370,11 +373,11 @@ export default function ItemDetails() {
                 value={newLocation.box_type}
                 onChange={(e) => setNewLocation({ ...newLocation, box_type: e.target.value })}
                 placeholder="Box type (optional)"
-                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{ padding: "0.3rem", borderRadius: "4px", border: "1px solid var(--border)" }}
               />
             )}
             {newLocation.rack.trim() && newLocation.shelf.trim() && (
-              <p style={{ margin: 0, fontSize: "0.8rem", color: "#555" }}>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)" }}>
                 Will create/link: {newLocation.box.trim() ? `${newLocation.rack.trim()}-${newLocation.shelf.trim()}-${newLocation.box.trim()}` : `${newLocation.rack.trim()}-${newLocation.shelf.trim()}`}
               </p>
             )}
@@ -383,12 +386,12 @@ export default function ItemDetails() {
       ) : (
         <>
           <h2 style={{ textAlign: "center" }}><em>{item.item_name}</em></h2>
-          <div style={{ maxWidth: "600px", margin: "0 auto", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9", color: "#333" }}>
-            <p><strong>Description:</strong> {item.description}</p>
+          <div className="card" style={{ maxWidth: "600px", margin: "0 auto" }}>
+            <p><strong>Description:</strong> {item.description || "—"}</p>
             <p><strong>Type:</strong> {item.item_type}</p>
-            <p><strong>Product Group:</strong> {item.product_group}</p>
-            <p><strong>Location(s):</strong> {item.item_location?.map((l: any) => l.location_id).join(", ")}</p>
-            <p><strong>Box Type:</strong> {item.item_location?.map((l: any) => l.location?.box_type).filter(Boolean).join(", ")}</p>
+            <p><strong>Product Group:</strong> {item.product_group || "—"}</p>
+            <p><strong>Location(s):</strong> {item.item_location?.map((l: any) => l.location_id).join(", ") || "—"}</p>
+            <p><strong>Box Type:</strong> {item.item_location?.map((l: any) => l.location?.box_type).filter(Boolean).join(", ") || "—"}</p>
             {equipment && (
               <>
                 <p><strong>Low Stock Threshold:</strong> {equipment.low_stock_threshold ?? "—"}</p>
@@ -400,24 +403,24 @@ export default function ItemDetails() {
             )}
           </div>
 
-          <div style={{ maxWidth: "600px", margin: "1.5rem auto 0", border: "1px solid #ccc", borderRadius: "8px", padding: "1rem", backgroundColor: "#f9f9f9", color: "#333" }}>
+          <div className="card" style={{ maxWidth: "600px", margin: "1.5rem auto 0" }}>
             <h3 style={{ margin: "0 0 0.75rem 0" }}>Audit Log</h3>
             {audits.length === 0 ? (
-              <p style={{ margin: 0, fontStyle: "italic", color: "#888" }}>No audit records yet.</p>
+              <p style={{ margin: 0, fontStyle: "italic", color: "var(--muted)" }}>No audit records yet.</p>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                 {audits.map((a) => (
-                  <li key={a.audit_number} style={{ borderBottom: "1px solid #ddd", padding: "0.5rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.9rem" }}>
+                  <li key={a.audit_number} style={{ borderBottom: "1px solid var(--border)", padding: "0.5rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.9rem" }}>
                     <div>
-                      <span style={{ fontWeight: "bold", color: a.quantity > 0 ? "#27ae60" : "#c0392b" }}>
+                      <span style={{ fontWeight: "bold", color: a.quantity > 0 ? "var(--success)" : "var(--danger)" }}>
                         {a.quantity > 0 ? `+${a.quantity}` : a.quantity}
                       </span>
-                      <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", color: "#888", fontStyle: "italic" }}>
+                      <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", color: "var(--muted)", fontStyle: "italic" }}>
                         {a.action === "withdraw" ? "Withdrawn" : a.action === "return" ? "Returned" : a.action === "intake" ? "Stock added" : a.quantity > 0 ? "Added" : "Withdrawn"}
                       </span>
-                      <span style={{ marginLeft: "0.75rem", color: "#555" }}>{a.email_address}</span>
+                      <span style={{ marginLeft: "0.75rem", color: "var(--muted)" }}>{a.email_address}</span>
                     </div>
-                    <span style={{ color: "#888" }}>
+                    <span style={{ color: "var(--muted)" }}>
                       {new Date(a.occurred_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                     </span>
                   </li>
