@@ -35,6 +35,42 @@ async function getHaloToken(forceRefresh = false): Promise<string> {
   return cachedToken.token;
 }
 
+// Fetches a Halo item, refreshing the token once on 401
+async function fetchHaloItem(numericId: number): Promise<{ status: number; item?: Record<string, unknown> }> {
+  const baseUrl = requireEnv("HALO_BASE_URL");
+  const doFetch = async (token: string) =>
+    fetch(`${baseUrl}/api/Item/${numericId}?includedetails=true`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(HALO_TIMEOUT_MS),
+    });
+
+  let res = await doFetch(await getHaloToken());
+  if (res.status === 401) res = await doFetch(await getHaloToken(true));
+  if (!res.ok) return { status: res.status };
+  return { status: res.status, item: await res.json() };
+}
+
+const stockOf = (item: Record<string, unknown>): number =>
+  (item.quantity_in_stock as number | undefined) ?? (item.quantity_remaining as number | undefined) ?? 0;
+
+export type HaloStockLevel =
+  | { ok: true; stock: number }
+  | { ok: false; reason: "not_found" | "halo_error" };
+
+// Read-only: current stock level for a Halo item
+export async function getHaloStock(haloId: string): Promise<HaloStockLevel> {
+  const numericId = Number(haloId);
+  if (!Number.isInteger(numericId) || numericId <= 0) return { ok: false, reason: "not_found" };
+
+  const { status, item } = await fetchHaloItem(numericId);
+  if (status === 404) return { ok: false, reason: "not_found" };
+  if (!item) {
+    console.error(`Halo item fetch failed (status ${status})`);
+    return { ok: false, reason: "halo_error" };
+  }
+  return { ok: true, stock: stockOf(item) };
+}
+
 export type HaloStockResult =
   | { ok: true; newStock: number }
   | { ok: false; reason: "not_found" | "insufficient_stock" | "halo_error"; currentStock?: number };
@@ -47,26 +83,14 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
   const baseUrl = requireEnv("HALO_BASE_URL");
   const stockLocationId = Number(requireEnv("HALO_STOCK_LOCATION_ID"));
 
-  let token = await getHaloToken();
-  const fetchItem = (t: string) =>
-    fetch(`${baseUrl}/api/Item/${numericId}?includedetails=true`, {
-      headers: { Authorization: `Bearer ${t}` },
-      signal: AbortSignal.timeout(HALO_TIMEOUT_MS),
-    });
-
-  let getRes = await fetchItem(token);
-  if (getRes.status === 401) {
-    token = await getHaloToken(true);
-    getRes = await fetchItem(token);
-  }
-  if (getRes.status === 404) return { ok: false, reason: "not_found" };
-  if (!getRes.ok) {
-    console.error(`Halo item fetch failed (status ${getRes.status})`);
+  const { status, item } = await fetchHaloItem(numericId);
+  if (status === 404) return { ok: false, reason: "not_found" };
+  if (!item) {
+    console.error(`Halo item fetch failed (status ${status})`);
     return { ok: false, reason: "halo_error" };
   }
 
-  const item = await getRes.json();
-  const currentStock = item.quantity_in_stock ?? item.quantity_remaining ?? 0;
+  const currentStock = stockOf(item);
 
   if (quantityChange < 0 && currentStock + quantityChange < 0) {
     return { ok: false, reason: "insufficient_stock", currentStock };
@@ -97,7 +121,7 @@ export async function updateHaloStock(haloId: string, quantityChange: number): P
 
   const postRes = await fetch(`${baseUrl}/api/ItemStock`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${await getHaloToken()}`, "Content-Type": "application/json" },
     body: JSON.stringify([movement]),
     signal: AbortSignal.timeout(HALO_TIMEOUT_MS),
   });

@@ -73,6 +73,11 @@ export default function SearchItems() {
     init().finally(() => setLoading(false));
   }, []);
 
+  const refreshProductGroups = async () => {
+    const { data } = await supabase.from("product_group").select("*").order("product_group");
+    if (data) setProductGroups(data.map((r: any) => r.product_group));
+  };
+
   const fetchItems = async (search: string, box: string, order: "asc" | "desc") => {
     let query = supabase.from("item").select("*");
 
@@ -396,7 +401,10 @@ export default function SearchItems() {
           open={showBulkAdd}
           onClose={() => setShowBulkAdd(false)}
           productGroups={productGroups}
-          onImported={() => fetchItems(searchTerm.input, boxFilter, sortOrder)}
+          onImported={() => {
+            fetchItems(searchTerm.input, boxFilter, sortOrder);
+            refreshProductGroups();
+          }}
         />
       )}
     </main>

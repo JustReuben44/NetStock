@@ -58,6 +58,7 @@ type ParsedRow = {
   shelf: string;
   box: string;
   box_type: string;
+  newGroup?: boolean;
   errors: string[];
   status?: "ok" | "failed";
   failReason?: string;
@@ -120,6 +121,7 @@ export function BulkAddDrawer({
     const { data: existingData } = await supabase.from("item").select("item_name");
     const existingNames = new Set((existingData ?? []).map((r: { item_name: string }) => r.item_name.trim().toLowerCase()));
     const groupLookup = new Map(productGroups.map((g) => [g.trim().toLowerCase(), g]));
+    const newGroupKeys = new Set<string>();
     const seenInFile = new Set<string>();
 
     const get = (r: string[], name: string) => {
@@ -161,9 +163,18 @@ export function BulkAddDrawer({
       }
 
       if (row.product_group) {
-        const canonical = groupLookup.get(row.product_group.toLowerCase());
-        if (!canonical) row.errors.push(`Unknown product group "${row.product_group}" — create it in Settings first`);
-        else row.product_group = canonical;
+        const key = row.product_group.toLowerCase();
+        const canonical = groupLookup.get(key);
+        if (canonical) {
+          row.product_group = canonical;
+          if (newGroupKeys.has(key)) row.newGroup = true;
+        } else {
+          // Unknown group — it will be created on import. First occurrence
+          // fixes the casing for every other row in the file.
+          groupLookup.set(key, row.product_group);
+          newGroupKeys.add(key);
+          row.newGroup = true;
+        }
       }
 
       if (row.quantity && row.item_type !== "Tool") row.errors.push("quantity only applies to Tools");
@@ -188,8 +199,33 @@ export function BulkAddDrawer({
     setImporting(true);
     const updated = [...rows];
 
+    // Create any new product groups first so item inserts can reference them
+    const newGroups = [...new Set(
+      updated.filter((r) => r.errors.length === 0 && r.newGroup).map((r) => r.product_group)
+    )];
+    const failedGroups = new Set<string>();
+    for (const group of newGroups) {
+      const { error } = await supabase.from("product_group").insert({ product_group: group });
+      if (error) {
+        // Might already exist (created since validation) — only fail if it truly doesn't
+        const { data: check } = await supabase
+          .from("product_group")
+          .select("product_group")
+          .eq("product_group", group)
+          .maybeSingle();
+        if (!check) failedGroups.add(group);
+      }
+    }
+
     for (const row of updated) {
       if (row.errors.length > 0) continue;
+
+      if (row.newGroup && failedGroups.has(row.product_group)) {
+        row.status = "failed";
+        row.failReason = `Could not create product group "${row.product_group}"`;
+        setRows([...updated]);
+        continue;
+      }
 
       const { data: itemData, error: itemError } = await supabase
         .from("item")
@@ -284,7 +320,8 @@ export function BulkAddDrawer({
           <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--muted)" }}>
             1. Download the template and open it in Excel.<br />
             2. Add one row per item (delete the example rows). <strong>quantity</strong> is for Tools;{" "}
-            <strong>lowStockThreshold</strong> and <strong>haloId</strong> are for Equipment.<br />
+            <strong>lowStockThreshold</strong> and <strong>haloId</strong> are for Equipment.
+            Product groups that don&apos;t exist yet are created automatically.<br />
             3. Save as CSV and upload it here.
           </p>
 
@@ -338,6 +375,11 @@ export function BulkAddDrawer({
                     </div>
                     {row.errors.length > 0 && (
                       <p style={{ margin: "0.25rem 0 0", color: "var(--danger)" }}>{row.errors.join("; ")}</p>
+                    )}
+                    {row.newGroup && row.errors.length === 0 && !row.status && (
+                      <p style={{ margin: "0.25rem 0 0", color: "var(--muted)" }}>
+                        New product group &quot;{row.product_group}&quot; will be created
+                      </p>
                     )}
                     {row.failReason && (
                       <p style={{ margin: "0.25rem 0 0", color: "var(--danger)" }}>{row.failReason}</p>

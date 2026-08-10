@@ -35,6 +35,23 @@ export default function ItemDetails() {
   const [inBasket, setInBasket] = useState(false);
   const [basketError, setBasketError] = useState<string | null>(null);
   const [audits, setAudits] = useState<any[]>([]);
+  const [haloStock, setHaloStock] = useState<number | null>(null);
+  const [haloStockStatus, setHaloStockStatus] = useState<"idle" | "loading" | "error">("idle");
+
+  useEffect(() => {
+    if (!equipment?.halo_id) { setHaloStock(null); setHaloStockStatus("idle"); return; }
+    let cancelled = false;
+    setHaloStockStatus("loading");
+    fetch(`/api/halo-stock?item_id=${encodeURIComponent(itemID)}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((json) => {
+        if (cancelled) return;
+        setHaloStock(json.stock);
+        setHaloStockStatus("idle");
+      })
+      .catch(() => { if (!cancelled) setHaloStockStatus("error"); });
+    return () => { cancelled = true; };
+  }, [equipment?.halo_id, itemID]);
 
   const loadItem = async () => {
     const [{ data: itemData, error: itemError }, { data: eqData }, { data: toolData }] = await Promise.all([
@@ -394,6 +411,16 @@ export default function ItemDetails() {
             <p><strong>Box Type:</strong> {item.item_location?.map((l: any) => l.location?.box_type).filter(Boolean).join(", ") || "—"}</p>
             {equipment && (
               <>
+                <p>
+                  <strong>Quantity (live from Halo):</strong>{" "}
+                  {!equipment.halo_id
+                    ? "— (no Halo ID linked)"
+                    : haloStockStatus === "loading"
+                    ? "Loading…"
+                    : haloStockStatus === "error"
+                    ? "Unavailable"
+                    : haloStock ?? "—"}
+                </p>
                 <p><strong>Low Stock Threshold:</strong> {equipment.low_stock_threshold ?? "—"}</p>
                 <p><strong>Halo ID:</strong> {equipment.halo_id ?? "—"}</p>
               </>
