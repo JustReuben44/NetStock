@@ -1,5 +1,6 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { useToast } from "@/components/toast";
 import { useRef, useState } from "react";
 
@@ -118,8 +119,17 @@ export function BulkAddDrawer({
       return;
     }
 
-    const { data: existingData } = await supabase.from("item").select("item_name");
-    const existingNames = new Set((existingData ?? []).map((r: { item_name: string }) => r.item_name.trim().toLowerCase()));
+    // Must be paged — a truncated list would let real duplicates through.
+    let existingData: { item_name: string }[];
+    try {
+      existingData = await fetchAllRows<{ item_name: string }>(() =>
+        supabase.from("item").select("item_name"),
+      );
+    } catch {
+      setFileError("Couldn't check for existing items. Check your connection and try again.");
+      return;
+    }
+    const existingNames = new Set(existingData.map((r) => r.item_name.trim().toLowerCase()));
     const groupLookup = new Map(productGroups.map((g) => [g.trim().toLowerCase(), g]));
     const newGroupKeys = new Set<string>();
     const seenInFile = new Set<string>();

@@ -1,16 +1,27 @@
 "use client";
 import { createClient } from "@/lib/supabase-client";
 import { getOrCreateBasket } from "@/lib/basket";
-import { sanitizeSearch } from "@/lib/search";
+import { fetchAllRows } from "@/lib/fetch-all";
+import { buildSearchDoc, searchItems, type SortMode } from "@/lib/search";
 import { useToast } from "@/components/toast";
 import { LoadingScreen } from "@/components/loading";
 import { BulkAddDrawer } from "@/components/bulk-add";
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 const supabase = createClient();
 
 type ItemType = "Tool" | "Equipment" | "Miscellaneous";
+
+const ITEM_TYPES: ItemType[] = ["Tool", "Equipment", "Miscellaneous"];
+
+// Everything the search index needs. The location embed is the form already
+// proven on the item detail page; equipment/tool are fetched alongside and
+// joined in JS rather than embedded, since no FK-based embed of those two
+// exists anywhere else in the app to rely on.
+const ITEM_SELECT =
+  "item_id, item_name, item_type, product_group, description, " +
+  "item_location(location_id, location(rack, shelf, box, box_type))";
 
 const defaultNewItem = {
   item_name: "",
@@ -28,11 +39,14 @@ const defaultNewItem = {
 
 export default function SearchItems() {
   const showToast = useToast();
-  const [searchTerm, setSearchTerm] = useState({ input: "" });
+  const [searchInput, setSearchInput] = useState("");
   const [boxFilter, setBoxFilter] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("relevance");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [basketItemIds, setBasketItemIds] = useState<Set<string>>(new Set());
   const [basketId, setBasketId] = useState<string | null>(null);
   const [errorItemId, setErrorItemId] = useState<string | null>(null);
@@ -43,19 +57,49 @@ export default function SearchItems() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [productGroups, setProductGroups] = useState<string[]>([]);
 
+  // Paged so the list is never silently cut off at PostgREST's max_rows.
+  const loadItems = async () => {
+    const [rows, equipmentRows, toolRows] = await Promise.all([
+      fetchAllRows<any>(() => supabase.from("item").select(ITEM_SELECT).order("item_name")),
+      fetchAllRows<any>(() => supabase.from("equipment").select("item_id, halo_id")),
+      fetchAllRows<any>(() => supabase.from("tool").select("item_id, quantity")),
+    ]);
+
+    const haloById = new Map(equipmentRows.map((r) => [r.item_id, r.halo_id]));
+    const quantityById = new Map(toolRows.map((r) => [r.item_id, r.quantity]));
+
+    setItems(
+      rows.map((row) => ({
+        ...row,
+        equipment: haloById.has(row.item_id) ? { halo_id: haloById.get(row.item_id) } : null,
+        tool: quantityById.has(row.item_id) ? { quantity: quantityById.get(row.item_id) } : null,
+      })),
+    );
+  };
+
+  const reload = async () => {
+    try {
+      await loadItems();
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
+      showToast("error", "Could not refresh the stock list");
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) return;
 
-      const [{ data: itemData }, bid, { data: userData }, { data: pgData }] = await Promise.all([
-        supabase.from("item").select("*").order('item_name'),
+      const [itemResult, bid, { data: userData }, { data: pgData }] = await Promise.all([
+        loadItems().then(() => true).catch(() => false),
         getOrCreateBasket(supabase, user.email),
         supabase.from("users").select("role").eq("email_address", user.email).maybeSingle(),
         supabase.from("product_group").select("*").order("product_group"),
       ]);
 
-      if (itemData) setItems(itemData);
+      if (!itemResult) setLoadError(true);
       if (userData?.role === "Administrator") setIsAdmin(true);
       if (pgData) setProductGroups(pgData.map((r: any) => r.product_group));
 
@@ -78,40 +122,40 @@ export default function SearchItems() {
     if (data) setProductGroups(data.map((r: any) => r.product_group));
   };
 
-  const fetchItems = async (search: string, box: string, order: "asc" | "desc") => {
-    let query = supabase.from("item").select("*");
+  // Normalize each row once; re-score on every keystroke against the result.
+  const docs = useMemo(() => items.map(buildSearchDoc), [items]);
 
-    const term = sanitizeSearch(search);
-    if (term) {
-      query = query.or(`item_name.ilike.%${term}%,item_type.ilike.%${term}%,product_group.ilike.%${term}%`);
-    }
+  const deferredQuery = useDeferredValue(searchInput);
+  const deferredBox = useDeferredValue(boxFilter);
 
-    if (box) {
-      const { data: locationData } = await supabase
-        .from("item_location")
-        .select("item_id")
-        .eq("location_id", box);
+  const hasQuery = deferredQuery.trim().length > 0;
+  const hasFilters = hasQuery || deferredBox.trim().length > 0 || !!typeFilter || !!groupFilter;
+  // "Best match" is meaningless without a query — fall back to A→Z.
+  const effectiveSort: SortMode = sortMode === "relevance" && !hasQuery ? "asc" : sortMode;
 
-      const itemIds = locationData?.map((r: any) => r.item_id) ?? [];
-      if (itemIds.length === 0) { setItems([]); return; }
-      query = query.in("item_id", itemIds);
-    }
+  const results = useMemo(
+    () =>
+      searchItems(
+        docs,
+        { query: deferredQuery, location: deferredBox, itemType: typeFilter, productGroup: groupFilter },
+        effectiveSort,
+      ),
+    [docs, deferredQuery, deferredBox, typeFilter, groupFilter, effectiveSort],
+  );
 
-    query = query.order("item_name", { ascending: order === "asc" });
-
-    const { data, error } = await query;
-    if (!error && data) setItems(data);
+  const cycleSort = () => {
+    setSortMode((mode) => {
+      if (mode === "relevance") return "asc";
+      if (mode === "asc") return "desc";
+      return hasQuery ? "relevance" : "asc";
+    });
   };
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    fetchItems(searchTerm.input, boxFilter, sortOrder);
-  };
-
-  const toggleSort = () => {
-    const next = sortOrder === "asc" ? "desc" : "asc";
-    setSortOrder(next);
-    fetchItems(searchTerm.input, boxFilter, next);
+  const clearFilters = () => {
+    setSearchInput("");
+    setBoxFilter("");
+    setTypeFilter("");
+    setGroupFilter("");
   };
 
   const addToBasket = async (itemId: string) => {
@@ -213,7 +257,7 @@ export default function SearchItems() {
 
     setNewItem(defaultNewItem);
     setShowCreate(false);
-    await fetchItems(searchTerm.input, boxFilter, sortOrder);
+    await reload();
     showToast("success", "Item added successfully");
   };
 
@@ -221,13 +265,14 @@ export default function SearchItems() {
     <main>
       <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem" }}>
         <h2 style={{ textAlign: "center" }}><em>Search Stock</em></h2>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
+        <form onSubmit={(e) => e.preventDefault()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
           <input
-            type="text"
+            type="search"
             placeholder="e.g fibre cables"
+            aria-label="Search stock"
             style={{ padding: "0.5rem", fontSize: "1rem", width: "300px", borderRadius: "4px", border: "1px solid #ccc" }}
-            value={searchTerm.input}
-            onChange={(e) => setSearchTerm({ ...searchTerm, input: e.target.value })}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </form>
       </div>
@@ -350,17 +395,38 @@ export default function SearchItems() {
         <LoadingScreen />
       ) : (
       <>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center" }}>
-        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start" }}>
-          <button type="button" className="itemButton" onClick={toggleSort}>
-            {sortOrder === "asc" ? "A → Z" : "Z → A"}
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 1rem", display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start", gap: "0.5rem", flexWrap: "wrap" }}>
+          <button type="button" className="itemButton" onClick={cycleSort}>
+            {effectiveSort === "relevance" ? "Best match" : effectiveSort === "asc" ? "A → Z" : "Z → A"}
           </button>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            aria-label="Filter by type"
+            style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+          >
+            <option value="">All types</option>
+            {ITEM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select
+            value={groupFilter}
+            onChange={(e) => setGroupFilter(e.target.value)}
+            aria-label="Filter by product group"
+            style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+          >
+            <option value="">All groups</option>
+            {productGroups.map((pg) => <option key={pg} value={pg}>{pg}</option>)}
+          </select>
         </div>
-        <p style={{ fontStyle: "italic", margin: 0 }}>Showing {items.length} results</p>
+        <p style={{ fontStyle: "italic", margin: 0 }}>
+          Showing {results.length}{hasFilters ? ` of ${items.length}` : ""} results
+        </p>
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
           <input
-            type="text"
+            type="search"
             placeholder="search by box"
+            aria-label="Filter by rack, shelf or box"
             style={{ padding: "0.5rem", fontSize: "1rem", width: "120px", borderRadius: "4px", border: "1px solid #ccc" }}
             value={boxFilter}
             onChange={(e) => setBoxFilter(e.target.value)}
@@ -368,11 +434,49 @@ export default function SearchItems() {
         </div>
       </div>
 
+      {loadError ? (
+        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "2rem 1rem", textAlign: "center" }}>
+          <p style={{ margin: "0 0 0.75rem", color: "var(--danger)" }}>Couldn&apos;t load the stock list.</p>
+          <button type="button" className="itemButton" onClick={reload}>Try again</button>
+        </div>
+      ) : results.length === 0 ? (
+        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "2rem 1rem", textAlign: "center" }}>
+          <p style={{ margin: "0 0 0.75rem", fontStyle: "italic" }}>
+            {items.length === 0
+              ? "No stock items yet."
+              : hasQuery
+                ? <>No items match &ldquo;{deferredQuery.trim()}&rdquo;.</>
+                : "No items match these filters."}
+          </p>
+          {hasFilters && (
+            <button type="button" className="itemButton itemButton--ghost" onClick={clearFilters}>
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
       <ul style={{ maxWidth: "1000px", margin: "0 auto", padding: "1rem", listStyle: "none" }}>
-        {items.map((item, key) => (
-          <li key={key} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <h4 style={{ margin: "0 0 0.5rem 0" }}>{item.item_name}</h4>
+        {results.map((doc) => {
+          const item = doc.row;
+          const meta = [
+            doc.display.itemType,
+            doc.display.productGroup,
+            doc.display.quantity != null ? `Qty ${doc.display.quantity}` : "",
+            doc.display.locationIds.length
+              ? doc.display.locationIds[0] +
+                (doc.display.locationIds.length > 1 ? ` +${doc.display.locationIds.length - 1} more` : "")
+              : "",
+          ].filter(Boolean);
+
+          return (
+          <li key={item.item_id} style={{ borderBottom: "1px solid var(--border)", padding: "1rem 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+              <div style={{ minWidth: 0 }}>
+                <h4 style={{ margin: "0 0 0.25rem 0" }}>{item.item_name}</h4>
+                {meta.length > 0 && (
+                  <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.7 }}>{meta.join(" · ")}</p>
+                )}
+              </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
                 <div style={{ display: "flex", gap: "1rem" }}>
                   {item.item_type !== "Miscellaneous" && (
@@ -391,8 +495,10 @@ export default function SearchItems() {
               </div>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
+      )}
       </>
       )}
 
@@ -402,7 +508,7 @@ export default function SearchItems() {
           onClose={() => setShowBulkAdd(false)}
           productGroups={productGroups}
           onImported={() => {
-            fetchItems(searchTerm.input, boxFilter, sortOrder);
+            reload();
             refreshProductGroups();
           }}
         />
